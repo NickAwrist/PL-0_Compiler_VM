@@ -480,6 +480,47 @@ static void tokenize(Vector *const restrict token_table, Vector *const restrict 
 	}
 }
 
+/* ----------------------------------------------------------------------------------------
+
+	APPENDIX B
+
+program ::= block "." .
+
+block ::= const-declaration var-declaration statement.
+
+constdeclaration ::= [ “const” ident "=" number {"," ident "=" number} “;"].
+
+var-declaration ::= [ "var" ident {"," ident} “;"].
+
+statement ::= [ ident ":=" expression
+| "begin" statement { ";" statement } "end"
+| "if" condition "then" statement
+| "xor" condition "then" statement “else" statement
+| "while" condition "do" statement
+| "read" ident
+| "write" expression
+| empty ] .
+
+condition ::= "odd" expression
+| expression rel-op expression.
+
+rel-op ::= "="|“=<"|"<"|"=>"|">"|"<>“.
+
+expression ::= term { ("+"|"-") term}.
+
+term ::= factor {("*"|"/") factor}.
+
+factor ::= ident | number | "(" expression ")“.
+
+number ::= digit {digit}.
+
+ident ::= letter {letter | digit}.
+
+digit ;;= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9“.
+
+letter ::= "a" | "b" | ... | "y" | "z" | "A" | "B" | ... |"Y" | "Z".
+
+  ---------------------------------------------------------------------------------------- */
 
 int main(const int argc, const char *const *const argv) {
 	assert(argc == 2, "Expected exactly 1 argument: exe <INPUT>");
