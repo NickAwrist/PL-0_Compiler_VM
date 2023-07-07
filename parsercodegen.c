@@ -482,7 +482,7 @@ static void tokenize(Vector *const restrict token_table, Vector *const restrict 
 
 /* ----------------------------------------------------------------------------------------
 
-	APPENDIX B
+APPENDIX B:
 
 program ::= block "." .
 
@@ -520,7 +520,305 @@ digit ;;= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9“.
 
 letter ::= "a" | "b" | ... | "y" | "z" | "A" | "B" | ... |"Y" | "Z".
 
+
+Pay attention to this:
+** Do not print the symbol table. That will be replaced by inserting:
+**JMP 0 3 as the first instruction in the generated code
+**Replace in HW2 skipsym by oddsym.
+**Include in HW1 OPR: 11 ODD pas[sp] <— pas[sp] mod 2
+
+
+Appendix C:
+
+Error messages for the tiny PL/0 Parser:
+	• program must end with period
+	• const, var, and read keywords must be followed by identiNier
+	• symbol name has already been declared
+	• constants must be assigned with =
+	• constants must be assigned an integer value
+	• constant and variable declarations must be followed by a semicolon
+	• undeclared identiNier
+	• only variable values may be altered
+	• assignment statements must use :=
+	• begin must be followed by end
+	• if must be followed by then
+	• while must be followed by do
+	• condition must contain comparison operator
+	• right parenthesis must follow left parenthesis
+	• arithmetic equations must contain operands, parentheses, numbers, or
+	symbols
+
   ---------------------------------------------------------------------------------------- */
+
+int symbol_table_check(char* identifier, Vector* symbol_table){
+
+	/*
+	SYMBOLTABLECHECK (string)
+  		linear search through symbol table looking at name
+  		return index if found, -1 if not
+	*/
+
+	return -1;
+}
+
+char* block(){
+
+	/*
+	BLOCK
+		CONST-DECLARATION
+		numVars = VAR-DECLARATION
+		emit INC (M = 3 + numVars)
+		STATEMENT
+	*/
+
+}
+
+char* const_declaration(){
+
+	/*
+	CONST-DECLARATION
+		if token == const
+			do
+				get next token
+				if token != identsym
+					error
+				if SYMBOLTABLECHECK (token) != -1
+					error
+				save ident name
+				get next token
+				if token != eqlsym
+					error
+				get next token
+				if token != numbersym
+					error
+				add to symbol table (kind 1, saved name, number, 0, 0)
+				get next token
+			while token == commasym
+			if token != semicolonsym
+				error
+			get next token
+	*/
+
+}
+
+int var_declartaion(){
+
+	/*
+	VAR-DECLARATION – returns number of variables
+		numVars = 0
+		if token == varsym
+			do
+				numVars++
+				get next token
+				if token != identsym
+					error
+				if SYMBOLTABLECHECK (token) != -1
+					error
+				add to symbol table (kind 2, ident, 0, 0, var# + 2)
+				get next token
+			while token == commasym
+			if token != semicolonsym
+				error
+			get next token
+		return numVars
+	*/
+
+}
+
+char* statement(){
+
+	/*
+	STATEMENT
+		if token == identsym
+			symIdx = SYMBOLTABLECHECK (token)
+			if symIdx == -1
+				error
+			if table[symIdx].kind != 2 (not a var)
+				error
+			get next token
+			if token != becomessym
+				error
+			get next token
+			EXPRESSION
+			emit STO (M = table[symIdx].addr)
+			return
+		if token == beginsym
+			do
+				get next token
+				STATEMENT
+			while token == semicolonsym
+			if token != endsym
+				error
+			get next token
+			return
+		if token == ifsym
+			get next token
+			CONDITION
+			jpcIdx = current code index
+			emit JPC
+			if token != thensym
+				error
+			get next token
+			STATEMENT
+			code[jpcIdx].M = current code index
+			return
+		if token == xorsym
+			do
+				get next token
+				CONDITION
+				jpcIdx = current code index
+				emit JPC
+				if token != thensym
+					error
+				get next token
+				STATEMENT
+				if token != semicolonsym
+					error
+				else
+					get next token
+				if token != elsesym
+					error
+				get next token
+				STATEMENT
+			code[jpcIdx].M = current code index
+			
+		if token == whilesym
+			get next token
+			loopIdx = current code index
+			CONDITION
+			if token != dosym
+				error
+			get next token
+			jpcIdx = current code index
+			emit JPC
+			STATEMENT
+			emit JMP (M = loopIdx)
+			code[jpcIdx].M = current code index
+			return
+		if token == readsym
+			get next token
+			if token != identsym
+				error
+			symIdx = SYMBOLTABLECHECK (token)
+			if symIdx == -1
+				error
+			if table[symIdx].kind != 2 (not a var)
+				error
+			get next token
+			emit READ
+			emit STO (M = table[symIdx].addr)
+			return
+		if token == writesym
+			get next token
+			EXPRESSION
+			emit WRITE
+			return
+	*/
+
+}
+
+char* condition(){
+
+	/*
+	CONDITION
+		if token == oddsym
+			get next token
+			EXPRESSION
+			emit ODD
+		else
+			EXPRESSION
+			if token == eqlsym 
+				get next token
+				EXPRESSION
+				emit EQL
+			else if token == neqsym
+				get next token
+				EXPRESSION
+				emit NEQ
+		else if token == lessym
+				get next token
+				EXPRESSION
+				emit LSS
+			else if token == leqsym
+				get next token
+				EXPRESSION
+				emit LEQ
+			else if token == gtrsym
+				get next token
+				EXPRESSION
+				emit GTR
+			else if token == geqsym
+				get next token
+				EXPRESSION
+				emit GEQ
+			else
+				error
+	*/
+
+}
+
+char* expression(){
+
+	/*
+	EXPRESSION
+		while token == plussym || token == minussym
+				if token == plussym
+				get next token
+				TERM
+				emit ADD
+			else
+				get next token
+				TERM
+				emit SUB
+	*/
+
+}
+
+char* term(){
+
+	/*
+	TERM
+		FACTOR
+		while token == multsym || token == slashsym
+				if token == multsym
+					get next token
+					FACTOR
+					emit MUL
+				else
+					get next token
+					FACTOR
+					emit DIV
+	*/
+
+}
+
+char* factor(){
+
+	/*
+	FACTOR
+		if token == identsym
+				symIdx = SYMBOLTABLECHECK (token)
+				if symIdx == -1
+					error
+				if table[symIdx].kind == 1 (const)
+					emit LIT (M = table[symIdx].Value)
+				else (var)
+					emit LOD (M = table[symIdx].addr)
+				get next token
+		else if token == numbersym
+				emit LIT
+				get next token
+		else if token == lparentsym
+				get next token
+				EXPRESSION
+				if token != rparentsym
+				error
+				get next token
+		else
+				error
+	*/
+
+}
 
 int main(const int argc, const char *const *const argv) {
 	assert(argc == 2, "Expected exactly 1 argument: exe <INPUT>");
