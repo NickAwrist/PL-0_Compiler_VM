@@ -1,7 +1,1 @@
-var x, y;
-begin
-x := y * 2;
-y := x + 3
-var z;
-z := 3
-end.
+const a := 5;
