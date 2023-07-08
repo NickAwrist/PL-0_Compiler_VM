@@ -559,6 +559,7 @@ Error messages for the tiny PL/0 Parser:
   ---------------------------------------------------------------------------------------- */
 
 unsigned int lexical_level = 0;
+unsigned int token_table_index;
 
 int symbol_table_check(Symbol symbol, Vector *symbol_table){
 
@@ -591,7 +592,7 @@ char* block(){
 	abort();
 }
 
-void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsigned int index){
+void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
 
 	/*
 	CONST-DECLARATION
@@ -620,13 +621,12 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsig
 	printf("CONST_DECLARATION\n");
 	const Token *const tokens = (Token*)token_table->arr;
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
-	printf("Type: %d\n", t.type);
 	Token next_token;
 	if(t.type == TK_CONST){
 
 		do{
-			next_token = tokens[++index];
-			printf("Next Type: %d\n", next_token.type);
+			// Identifier
+			next_token = tokens[++token_table_index];
 			if(next_token.type != TK_IDENT){
 				printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 			}
@@ -634,22 +634,22 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsig
 				printf("ERROR, identifier already defined in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 			}
 
-			const char* identifier_name = symbols[next_token.data.symbol_index].string;
-			printf("Ident name: %s\n", identifier_name);
-			next_token = tokens[++index];
-
 			int token_index = next_token.data.symbol_index;
-			if(next_token.type != TK_EQL){
-				printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
-			}
-			printf("Next Type: %d\n", next_token.type);
+			const char* identifier_name = symbols[token_index].string;
 
-			next_token = tokens[++index];
+			// :=
+			next_token = tokens[++token_table_index];
+			if(next_token.type != TK_BECOME){
+				printf("ERROR, expected ':=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			}
+
+			// number
+			next_token = tokens[++token_table_index];
 			if(next_token.type != TK_NUMBER){
 				printf("ERROR, expected a number in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 			}
-			printf("Next Type: %d\n", next_token.type);
 		
+			// Edit symbol table
 			Symbol *s = vector_get(*symbol_table, token_index, Symbol);
 			s->kind = 1;
 			s->value = next_token.data.int_literal;
@@ -658,19 +658,19 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsig
 
 			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
 
-			next_token = tokens[++index];
+			// , or ;
+			next_token = tokens[++token_table_index];
 		}while(next_token.type == TK_COMMA); 
 
 		if(next_token.type != TK_SEMICOLON){
 			printf("ERROR, expected semicolon\n");
 		}
-		next_token = tokens[++index];
-		
+		token_table_index++;
 	}
 
 }
 
-int var_declartaion(Token t, Vector *token_table, Vector *symbol_table, unsigned int index){
+int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 
 	/*
 	VAR-DECLARATION – returns number of variables
@@ -700,7 +700,8 @@ int var_declartaion(Token t, Vector *token_table, Vector *symbol_table, unsigned
 		const Symbol *const symbols = (Symbol*)symbol_table->arr;
 		do{
 			numVars++;
-			next_token = tokens[++index];
+			// Identifier
+			next_token = tokens[++token_table_index];
 			if(next_token.type != TK_IDENT){
 				printf("ERROR, invalid token type in var declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 			}
@@ -708,28 +709,28 @@ int var_declartaion(Token t, Vector *token_table, Vector *symbol_table, unsigned
 				printf("ERROR, identifier already defined in var declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 			}
 
-			const char* identifier_name = symbols[next_token.data.symbol_index].string;
-			next_token = tokens[++index];
-
+			// Edit symbol table
 			int token_index = next_token.data.symbol_index; 
-		
+			const char* identifier_name = symbols[token_index].string;
+
 			Symbol *s = vector_get(*symbol_table, token_index, Symbol);
 			s->kind = 2;
 			s->value = 0;
 			s->level = lexical_level;
-			s->mark = numVars + 2;
+			s->address = numVars + 2;
+			s->mark = 0;
 
-			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
+			// , or ;
+			next_token = tokens[++token_table_index];
 
-			next_token = tokens[++index];
+			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Adress= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].address, symbols[token_index].level, symbols[token_index].mark);
 		}while(next_token.type == TK_COMMA);
 
 		if(next_token.type != TK_SEMICOLON){
 			printf("ERROR, expected semicolon\n");
 		}
-		next_token = tokens[++index];
+		token_table_index++;
 	}
-
 	return numVars;
 }
 
@@ -933,6 +934,14 @@ char* factor(){
 	abort();
 }
 
+/*
+		CURRENT PROBLEMS
+
+		- Symbols need to be added during parsing not during tokenizing. This gives a false positive error
+			in var/const declaration saying that the variable is already in symbol table. Maybe reset symbol table
+			after tokenizing?
+*/
+
 int main(const int argc, const char *const *const argv) {
 	assert(argc == 2, "Expected exactly 1 argument: exe <INPUT>");
 
@@ -947,9 +956,14 @@ int main(const int argc, const char *const *const argv) {
 
 	fclose(input_file);
 
-	Token *t = vector_get(token_table, 0, Token);
-	const_declaration(*t, &token_table, &symbol_table, 0);
+	token_table_index = 0;
+	Token *t = vector_get(token_table, token_table_index, Token);
+	//printf("%d\n", t->type);
+	int a = var_declaration(*t, &token_table, &symbol_table);
 
+	t = vector_get(token_table, token_table_index, Token);
+	const_declaration(*t, &token_table, &symbol_table);
+	
 
 	// Print token stream.
 	printf(ANSI_WARN "\nTokens:\n" ANSI_RESET);
