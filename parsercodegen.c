@@ -591,7 +591,7 @@ char* block(){
 	abort();
 }
 
-void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsigned int index ){
+void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsigned int index){
 
 	/*
 	CONST-DECLARATION
@@ -621,54 +621,56 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsig
 	const Token *const tokens = (Token*)token_table->arr;
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 	printf("Type: %d\n", t.type);
+	Token next_token;
 	if(t.type == TK_CONST){
-		Token next_token = tokens[++index];
-		printf("Next Type: %d\n", next_token.type);
-		if(next_token.type != TK_IDENT){
-			printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
-		}
-		if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) != -1){
-			printf("ERROR, identifier already defined in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
-		}
-		const char* identifier_name = symbols[next_token.data.symbol_index].string;
-		printf("Ident name: %s\n", identifier_name);
-		next_token = tokens[++index];
 
-		int token_index = next_token.data.symbol_index;
-		if(next_token.type != TK_EQL){
-			printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
-		}
-		printf("Next Type: %d\n", next_token.type);
-
-		next_token = tokens[++index];
-		if(next_token.type != TK_NUMBER){
-			printf("ERROR, expected a number in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
-		}
-		printf("Next Type: %d\n", next_token.type);
-	
-		printf("poop 1\n");
-		Symbol *s = vector_get(*symbol_table, token_index, Symbol);
-		s->kind = 1;
-		strcpy(s->string, identifier_name);
-		printf("poop 2\n");
-		s->value = next_token.data.int_literal;
-		s->level = lexical_level;
-		s->mark = 0;
-
-		printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
-
-		printf("poop 3\n");
-		while(next_token.type == TK_COMMA){
-			if(next_token.type != TK_SEMICOLON){
-				printf("ERROR, expected semicolon\n");
-			}
+		do{
 			next_token = tokens[++index];
+			printf("Next Type: %d\n", next_token.type);
+			if(next_token.type != TK_IDENT){
+				printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			}
+			if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) != -1){
+				printf("ERROR, identifier already defined in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			}
+
+			const char* identifier_name = symbols[next_token.data.symbol_index].string;
+			printf("Ident name: %s\n", identifier_name);
+			next_token = tokens[++index];
+
+			int token_index = next_token.data.symbol_index;
+			if(next_token.type != TK_EQL){
+				printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			}
+			printf("Next Type: %d\n", next_token.type);
+
+			next_token = tokens[++index];
+			if(next_token.type != TK_NUMBER){
+				printf("ERROR, expected a number in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			}
+			printf("Next Type: %d\n", next_token.type);
+		
+			Symbol *s = vector_get(*symbol_table, token_index, Symbol);
+			s->kind = 1;
+			s->value = next_token.data.int_literal;
+			s->level = lexical_level;
+			s->mark = 0;
+
+			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
+
+			next_token = tokens[++index];
+		}while(next_token.type == TK_COMMA); 
+
+		if(next_token.type != TK_SEMICOLON){
+			printf("ERROR, expected semicolon\n");
 		}
+		next_token = tokens[++index];
+		
 	}
 
 }
 
-int var_declartaion(){
+int var_declartaion(Token t, Vector *token_table, Vector *symbol_table, unsigned int index){
 
 	/*
 	VAR-DECLARATION – returns number of variables
@@ -690,7 +692,45 @@ int var_declartaion(){
 		return numVars
 	*/
 
-	abort();
+	int numVars = 0;
+	if(t.type == TK_VAR){
+		Token next_token;
+		printf("VAR_DECLARATION\n");
+		const Token *const tokens = (Token*)token_table->arr;
+		const Symbol *const symbols = (Symbol*)symbol_table->arr;
+		do{
+			numVars++;
+			next_token = tokens[++index];
+			if(next_token.type != TK_IDENT){
+				printf("ERROR, invalid token type in var declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			}
+			if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) != -1){
+				printf("ERROR, identifier already defined in var declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			}
+
+			const char* identifier_name = symbols[next_token.data.symbol_index].string;
+			next_token = tokens[++index];
+
+			int token_index = next_token.data.symbol_index; 
+		
+			Symbol *s = vector_get(*symbol_table, token_index, Symbol);
+			s->kind = 2;
+			s->value = 0;
+			s->level = lexical_level;
+			s->mark = numVars + 2;
+
+			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
+
+			next_token = tokens[++index];
+		}while(next_token.type == TK_COMMA);
+
+		if(next_token.type != TK_SEMICOLON){
+			printf("ERROR, expected semicolon\n");
+		}
+		next_token = tokens[++index];
+	}
+
+	return numVars;
 }
 
 char* statement(){
