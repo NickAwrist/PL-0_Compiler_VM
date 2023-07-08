@@ -940,6 +940,15 @@ char* factor(){
 		- Symbols need to be added during parsing not during tokenizing. This gives a false positive error
 			in var/const declaration saying that the variable is already in symbol table. Maybe reset symbol table
 			after tokenizing?
+
+		TO DO
+
+		- New vector for OP CODE
+		- FACTOR
+		- TERM
+		- EXPRESSION
+		- CONDITION
+		- STATEMENT
 */
 
 int main(const int argc, const char *const *const argv) {
