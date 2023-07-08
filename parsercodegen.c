@@ -88,6 +88,8 @@ static void push_vector(Vector *const restrict list, const void* const restrict 
 	list->len += 1;
 }
 
+#define vector_get(vector, index, type) (&((type*)vector.arr)[index])
+
 
 
 /// All valid token numbers. Named like the assignment says but without the trailing "sym".
@@ -560,13 +562,13 @@ int symbol_table_check(Symbol symbol, Vector const* restrict symbol_table){
 
 	/*
 	SYMBOLTABLECHECK (string)
-  		linear search through symbol table looking at name
-  		return index if found, -1 if not
+		linear search through symbol table looking at name
+		return index if found, -1 if not
 	*/
 
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
-	for(int i= symbol_table->len; i>=0; i--){
-		if (strcmp(symbols[i].string, symbol.string) == 0) {
+	for(int i= symbol_table->len-1; i>=0; i--){
+		if (strcmp(symbols[i].string, symbol->string) == 0) {
 			return i;
 		}
 	}
@@ -584,6 +586,7 @@ char* block(){
 		STATEMENT
 	*/
 
+	abort();
 }
 
 char* const_declaration(Token t, Vector const* restrict token_table, Vector const* restrict symbol_table, unsigned int index ){
@@ -614,7 +617,7 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 
 	const Token *const tokens = (Token*)token_table->arr;
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
-	if(t.type = TK_CONST){
+	if(t.type == TK_CONST){
 		Token next_token = tokens[++index];
 		if(next_token.type != TK_IDENT){
 			printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
@@ -623,7 +626,6 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 			printf("ERROR, identifier already defined in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
 		char* identifier_name = symbols[next_token.data.symbol_index].string;
-		int index = next_token.data.symbol_index;
 		next_token = tokens[++index];
 		if(next_token.type != TK_EQL){
 			printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
@@ -641,6 +643,7 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 		}
 	}
 
+	abort();
 }
 
 int var_declartaion(){
@@ -665,6 +668,7 @@ int var_declartaion(){
 		return numVars
 	*/
 
+	abort();
 }
 
 char* statement(){
@@ -757,6 +761,7 @@ char* statement(){
 			return
 	*/
 
+	abort();
 }
 
 char* condition(){
@@ -797,6 +802,7 @@ char* condition(){
 				error
 	*/
 
+	abort();
 }
 
 char* expression(){
@@ -814,6 +820,7 @@ char* expression(){
 				emit SUB
 	*/
 
+	abort();
 }
 
 char* term(){
@@ -832,6 +839,7 @@ char* term(){
 					emit DIV
 	*/
 
+	abort();
 }
 
 char* factor(){
@@ -860,6 +868,7 @@ char* factor(){
 				error
 	*/
 
+	abort();
 }
 
 int main(const int argc, const char *const *const argv) {
@@ -879,23 +888,21 @@ int main(const int argc, const char *const *const argv) {
 
 	// Print token stream.
 	printf(ANSI_WARN "\nTokens:\n" ANSI_RESET);
-	const Token *const tokens = (Token*)token_table.arr;
 	for (unsigned int i=0; i<token_table.len; i++) {
-		const Token *const t = &tokens[i];
-		printf("%d %u (%u:%u)\n", t->type, t->data.symbol_index, t->pos.line, t->pos.col);
+		const Token t = *vector_get(token_table, i, Token);
+		printf("%d %u (%u:%u)\n", t.type, t.data.symbol_index, t.pos.line, t.pos.col);
 	}
 
 	// Print symbol table.
 	printf(ANSI_WARN "\nSymbol table:\n" ANSI_RESET);
-	const Symbol *const symbols = (Symbol*)symbol_table.arr;
 	for (unsigned int i=0; i<symbol_table.len; i++) {
-		printf("%s\n", symbols[i].string);
+		printf("%s\n", vector_get(symbol_table, i, Symbol)->string);
 	}
 
 	// Print source code reconstructed from token stream.
 	printf(ANSI_WARN "\nSource code reconstruction:\n" ANSI_RESET);
 	for (unsigned int i=0; i<token_table.len; i++) {
-		token_tostring(tokens[i], &symbol_table, stdout);
+		token_tostring(*vector_get(token_table, i, Token), &symbol_table, stdout);
 	}
 
 	free(token_table.arr);
