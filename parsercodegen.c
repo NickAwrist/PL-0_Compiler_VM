@@ -568,7 +568,7 @@ int symbol_table_check(Symbol symbol, Vector const* restrict symbol_table){
 
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 	for(int i= symbol_table->len-1; i>=0; i--){
-		if (strcmp(symbols[i].string, symbol->string) == 0) {
+		if (strcmp(symbols[i].string, symbol.string) == 0) {
 			return i;
 		}
 	}
