@@ -639,7 +639,6 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
 			}
 
 			int token_index = next_token.data.symbol_index;
-			const char* identifier_name = symbols[token_index].string;
 
 			// :=
 			next_token = tokens[++token_table_index];
@@ -715,7 +714,6 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 
 			// Edit symbol table
 			int token_index = next_token.data.symbol_index; 
-			const char* identifier_name = symbols[token_index].string;
 
 			Symbol *s = vector_get(*symbol_table, token_index, Symbol);
 			s->kind = 2;
@@ -871,7 +869,6 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 
 	printf("CONDITION\n");
 	const Token *const tokens = (Token*)token_table->arr;
-	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 
 	if(t.type == TK_ODD){
 		t = tokens[++token_table_index];
@@ -941,7 +938,6 @@ void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output
 
 	printf("EXPRESSION\n");
 	const Token *const tokens = (Token*)token_table->arr;
-	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 
 	while(t.type == TK_PLUS || t.type == TK_MINUS){
 		if(t.type == TK_PLUS){
@@ -977,7 +973,6 @@ void term(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file)
 	*/
 	printf("TERM\n");
 	const Token *const tokens = (Token*)token_table->arr;
-	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 
 	printf("PRE FACTOR SYMBOL %d\n", t.type);	
 	factor(t, token_table, symbol_table, output_file);
@@ -1096,6 +1091,7 @@ int main(const int argc, const char *const *const argv) {
 
 	token_table_index = 0;
 	FILE *const output_file = fopen("output", "wb");
+	assert(output_file != NULL, "Cannot open output file");
 
 	Token *t = vector_get(token_table, token_table_index, Token);
 	//printf("%d\n", t->type);
