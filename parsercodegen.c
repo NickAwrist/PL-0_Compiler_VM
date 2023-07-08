@@ -178,7 +178,13 @@ const char SPECIAL_CHARS[] = {'<', '>', ':', ';', ',', '.', '=', '+', '-', '*', 
 
 /// Null-terminated array of chars for use in a symbol table.
 typedef struct Symbol {
+	const unsigned int kind;
 	char string[MAX_IDENT + 1];
+	float value;
+	const unsigned int level;
+	const unsigned int  address;
+	unsigned int mark;
+
 } Symbol;
 
 
@@ -559,8 +565,8 @@ int symbol_table_check(Symbol symbol, Vector const* restrict symbol_table){
 	*/
 
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
-	for(int i= symbol_table->len-1; i>=0; i--){
-		if (strcmp(symbols[i].string, symbol->string) == 0) {
+	for(int i= symbol_table->len; i>=0; i--){
+		if (strcmp(symbols[i].string, symbol.string) == 0) {
 			return i;
 		}
 	}
@@ -613,24 +619,26 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 		if(next_token.type != TK_IDENT){
 			printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
-		if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) == -1){
-			printf("ERROR, invalid identifier in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+		if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) != -1){
+			printf("ERROR, identifier already defined in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
 		char* identifier_name = symbols[next_token.data.symbol_index].string;
+		int index = next_token.data.symbol_index;
 		next_token = tokens[++index];
 		if(next_token.type != TK_EQL){
 			printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
 		next_token = tokens[++index];
-		if(next_token.type == TK_NUMBER){
+		if(next_token.type != TK_NUMBER){
 			printf("ERROR, expected a number in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
-		/*
-		while token == commasym
-			if token != semicolonsym
-				error
-			get next token
-		*/
+		symbols[index].kind = 1;
+		while(next_token.type == TK_COMMA){
+			if(next_token.type != TK_SEMICOLON){
+				printf("ERROR, expected semicolon\n");
+			}
+			next_token = tokens[++index];
+		}
 	}
 
 }
