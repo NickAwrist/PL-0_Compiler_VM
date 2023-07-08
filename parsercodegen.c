@@ -88,6 +88,8 @@ static void push_vector(Vector *const restrict list, const void* const restrict 
 	list->len += 1;
 }
 
+#define vector_get(vector, index, type) (((type*)vector.arr)[index])
+
 
 
 /// All valid token numbers. Named like the assignment says but without the trailing "sym".
@@ -871,23 +873,21 @@ int main(const int argc, const char *const *const argv) {
 
 	// Print token stream.
 	printf(ANSI_WARN "\nTokens:\n" ANSI_RESET);
-	const Token *const tokens = (Token*)token_table.arr;
 	for (unsigned int i=0; i<token_table.len; i++) {
-		const Token *const t = &tokens[i];
-		printf("%d %u (%u:%u)\n", t->type, t->data.symbol_index, t->pos.line, t->pos.col);
+		const Token t = vector_get(token_table, i, Token);
+		printf("%d %u (%u:%u)\n", t.type, t.data.symbol_index, t.pos.line, t.pos.col);
 	}
 
 	// Print symbol table.
 	printf(ANSI_WARN "\nSymbol table:\n" ANSI_RESET);
-	const Symbol *const symbols = (Symbol*)symbol_table.arr;
 	for (unsigned int i=0; i<symbol_table.len; i++) {
-		printf("%s\n", symbols[i].string);
+		printf("%s\n", vector_get(symbol_table, i, Symbol).string);
 	}
 
 	// Print source code reconstructed from token stream.
 	printf(ANSI_WARN "\nSource code reconstruction:\n" ANSI_RESET);
 	for (unsigned int i=0; i<token_table.len; i++) {
-		token_tostring(tokens[i], &symbol_table, stdout);
+		token_tostring(vector_get(token_table, i, Token), &symbol_table, stdout);
 	}
 
 	free(token_table.arr);
