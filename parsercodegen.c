@@ -583,7 +583,7 @@ int symbol_table_check(Symbol symbol, Vector *symbol_table){
 	return -1;
 }
 
-char* block(){
+void block(){
 
 	/*
 	BLOCK
