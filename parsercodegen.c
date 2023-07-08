@@ -550,13 +550,20 @@ Error messages for the tiny PL/0 Parser:
 
   ---------------------------------------------------------------------------------------- */
 
-int symbol_table_check(char* identifier, Vector* symbol_table){
+int symbol_table_check(Symbol symbol, Vector const* restrict symbol_table){
 
 	/*
 	SYMBOLTABLECHECK (string)
   		linear search through symbol table looking at name
   		return index if found, -1 if not
 	*/
+
+	const Symbol *const symbols = (Symbol*)symbol_table->arr;
+	for(int i= symbol_table->len-1; i>=0; i--){
+		if (strcmp(symbols[i].string, symbol->string) == 0) {
+			return i;
+		}
+	}
 
 	return -1;
 }
@@ -573,7 +580,7 @@ char* block(){
 
 }
 
-char* const_declaration(){
+char* const_declaration(Token t, Vector const* restrict token_table, Vector const* restrict symbol_table, unsigned int index ){
 
 	/*
 	CONST-DECLARATION
@@ -598,6 +605,33 @@ char* const_declaration(){
 				error
 			get next token
 	*/
+
+	const Token *const tokens = (Token*)token_table->arr;
+	const Symbol *const symbols = (Symbol*)symbol_table->arr;
+	if(t.type = TK_CONST){
+		Token next_token = tokens[++index];
+		if(next_token.type != TK_IDENT){
+			printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+		}
+		if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) == -1){
+			printf("ERROR, invalid identifier in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+		}
+		char* identifier_name = symbols[next_token.data.symbol_index].string;
+		next_token = tokens[++index];
+		if(next_token.type != TK_EQL){
+			printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+		}
+		next_token = tokens[++index];
+		if(next_token.type == TK_NUMBER){
+			printf("ERROR, expected a number in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+		}
+		/*
+		while token == commasym
+			if token != semicolonsym
+				error
+			get next token
+		*/
+	}
 
 }
 
