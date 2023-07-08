@@ -88,7 +88,7 @@ static void push_vector(Vector *const restrict list, const void* const restrict 
 	list->len += 1;
 }
 
-#define vector_get(vector, index, type) (&((type*)vector.arr)[index])
+#define vector_get(vector, index, type) (&((type*)(vector).arr)[index])
 
 
 
@@ -558,7 +558,7 @@ Error messages for the tiny PL/0 Parser:
 
   ---------------------------------------------------------------------------------------- */
 
-int symbol_table_check(Symbol symbol, Vector const* restrict symbol_table){
+int symbol_table_check(Symbol symbol, Vector *symbol_table){
 
 	/*
 	SYMBOLTABLECHECK (string)
@@ -589,7 +589,7 @@ char* block(){
 	abort();
 }
 
-char* const_declaration(Token t, Vector const* restrict token_table, Vector const* restrict symbol_table, unsigned int index ){
+char* const_declaration(Token t, Vector const* restrict token_table, Vector *symbol_table, unsigned int index ){
 
 	/*
 	CONST-DECLARATION
@@ -627,14 +627,19 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 		}
 		char* identifier_name = symbols[next_token.data.symbol_index].string;
 		next_token = tokens[++index];
+
+		int token_index = next_token.data.symbol_index;
 		if(next_token.type != TK_EQL){
 			printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
+
 		next_token = tokens[++index];
 		if(next_token.type != TK_NUMBER){
 			printf("ERROR, expected a number in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
-		symbols[index].kind = 1;
+		Symbol *s = vector_get(*symbol_table, token_index, Symbol);
+		s->kind = 1;
+		
 		while(next_token.type == TK_COMMA){
 			if(next_token.type != TK_SEMICOLON){
 				printf("ERROR, expected semicolon\n");
