@@ -627,7 +627,7 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsig
 		if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) != -1){
 			printf("ERROR, identifier already defined in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
-		char* identifier_name = symbols[next_token.data.symbol_index].string;
+		const char* identifier_name = symbols[next_token.data.symbol_index].string;
 		next_token = tokens[++index];
 
 		int token_index = next_token.data.symbol_index;
