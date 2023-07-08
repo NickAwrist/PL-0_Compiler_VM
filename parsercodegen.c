@@ -557,6 +557,10 @@ Error messages for the tiny PL/0 Parser:
 	symbols
 
   ---------------------------------------------------------------------------------------- */
+void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
+void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
+void term(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
+void factor(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 
 unsigned int lexical_level = 0;
 unsigned int token_table_index;
@@ -734,7 +738,7 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 	return numVars;
 }
 
-char* statement(){
+void statement(){
 
 	/*
 	STATEMENT
@@ -827,7 +831,7 @@ char* statement(){
 	abort();
 }
 
-char* condition(){
+void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
 	CONDITION
@@ -865,10 +869,62 @@ char* condition(){
 				error
 	*/
 
-	abort();
+	printf("CONDITION\n");
+	const Token *const tokens = (Token*)token_table->arr;
+	const Symbol *const symbols = (Symbol*)symbol_table->arr;
+
+	if(t.type == TK_ODD){
+		t = tokens[++token_table_index];
+		expression(t, token_table, symbol_table, output_file);
+		// emit ODD
+		fprintf(output_file, "2 0 ODD\n");
+
+	}else{
+		expression(t, token_table, symbol_table, output_file);
+		if(t.type == TK_EQL){
+			t = tokens[++token_table_index];
+			expression(t, token_table, symbol_table, output_file);
+			// emit EQL
+			fprintf(output_file, "2 0 5\n");
+
+		}else if(t.type == TK_NEQ){
+			t = tokens[++token_table_index];
+			expression(t, token_table, symbol_table, output_file);
+			// emit NEQ
+			fprintf(output_file, "2 0 6\n");
+
+		}else if(t.type == TK_LESS){
+			t = tokens[++token_table_index];
+			expression(t, token_table, symbol_table, output_file);
+			// emit LSS
+			fprintf(output_file, "2 0 7\n");
+
+		}else if(t.type == TK_LEQ){
+			t = tokens[++token_table_index];
+			expression(t, token_table, symbol_table, output_file);
+			// emit LEQ
+			fprintf(output_file, "2 0 8\n");
+
+		}else if(t.type == TK_GTR){
+			t = tokens[++token_table_index];
+			expression(t, token_table, symbol_table, output_file);
+			// emit GTR
+			fprintf(output_file, "2 0 9\n");
+
+		}else if(t.type == TK_GEQ){
+			t = tokens[++token_table_index];
+			expression(t, token_table, symbol_table, output_file);
+			// emit GEQ
+			fprintf(output_file, "2 0 10\n");
+
+		}else{
+			printf("Invalid operator\n");
+		}
+	}
+	
 }
 
-char* expression(){
+void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
 	EXPRESSION
@@ -883,10 +939,28 @@ char* expression(){
 				emit SUB
 	*/
 
-	abort();
+	printf("EXPRESSION\n");
+	const Token *const tokens = (Token*)token_table->arr;
+	const Symbol *const symbols = (Symbol*)symbol_table->arr;
+
+	while(t.type == TK_PLUS || t.type == TK_MINUS){
+		if(t.type == TK_PLUS){
+			t = tokens[++token_table_index];
+			term(t, token_table, symbol_table, output_file);
+			// emit ADD
+			fprintf(output_file, "2 0 1\n");
+
+		}else{
+			t = tokens[++token_table_index];
+			term(t, token_table, symbol_table, output_file);
+			// emit SUB
+			fprintf(output_file, "2 0 2\n");
+		}
+	}
+
 }
 
-char* term(){
+void term(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
 	TERM
@@ -901,11 +975,32 @@ char* term(){
 					FACTOR
 					emit DIV
 	*/
+	printf("TERM\n");
+	const Token *const tokens = (Token*)token_table->arr;
+	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 
-	abort();
+	printf("PRE FACTOR SYMBOL %d\n", t.type);	
+	factor(t, token_table, symbol_table, output_file);
+	t = tokens[token_table_index];
+	printf("POST FACTOR SYMBOL %d\n", t.type);
+
+	while(t.type == TK_MULT || t.type == TK_SLASH){
+		if(t.type == TK_MULT){
+			t = tokens[++token_table_index];
+			factor(t, token_table, symbol_table, output_file);
+			// emit MUL
+			fprintf(output_file, "2 0 3\n");
+
+		}else{
+			t = tokens[++token_table_index];
+			factor(t, token_table, symbol_table, output_file);
+			// emit DIV
+			fprintf(output_file, "2 0 4\n");
+		}
+	}
 }
 
-char* factor(){
+void factor(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
 	FACTOR
@@ -931,7 +1026,41 @@ char* factor(){
 				error
 	*/
 
-	abort();
+	printf("FACTOR\n");
+	const Token *const tokens = (Token*)token_table->arr;
+	const Symbol *const symbols = (Symbol*)symbol_table->arr;
+	Token next_token;
+
+	if(t.type == TK_IDENT){
+		int symInx = t.data.symbol_index;
+		if(symInx == -1){
+			printf("Unknown identifier\n");
+		}
+		if(symbols[symInx].kind == 1){
+			// LIT 0 VALUE
+			fprintf(output_file, "1 0 %d\n", symbols[symInx].value);
+		}else if(symbols[symInx].kind == 2){
+			// LOD 0 ADDR
+			fprintf(output_file, "3 0 %d\n", symbols[symInx].address);
+		}
+		next_token = tokens[++token_table_index];
+
+	}else if(t.type == TK_NUMBER){
+		// emit LIT
+		fprintf(output_file, "1 0 %d\n", t.data.int_literal);
+		next_token = tokens[++token_table_index];
+
+	}else if(t.type == TK_LPARENT){
+		next_token = tokens[++token_table_index];
+		expression(next_token, token_table, symbol_table, output_file);
+		if(next_token.type != TK_RPARENT){
+			printf("Inbalanced parenthesis\n");
+			next_token = tokens[++token_table_index];
+		}
+
+	}else{
+		printf("Error\n");
+	}
 }
 
 /*
@@ -943,12 +1072,12 @@ char* factor(){
 
 		TO DO
 
-		- New vector for OP CODE
-		- FACTOR
-		- TERM
-		- EXPRESSION
-		- CONDITION
+		- FACTOR testing
+		- TERM testing
+		- EXPRESSION testing
+		- CONDITION testing
 		- STATEMENT
+		- BLOCK
 */
 
 int main(const int argc, const char *const *const argv) {
@@ -966,14 +1095,17 @@ int main(const int argc, const char *const *const argv) {
 	fclose(input_file);
 
 	token_table_index = 0;
+	FILE *const output_file = fopen("output", "wb");
+
 	Token *t = vector_get(token_table, token_table_index, Token);
 	//printf("%d\n", t->type);
-	int a = var_declaration(*t, &token_table, &symbol_table);
+	//int a = var_declaration(*t, &token_table, &symbol_table);
+	condition(*t, &token_table, &symbol_table, output_file);
 
 	t = vector_get(token_table, token_table_index, Token);
-	const_declaration(*t, &token_table, &symbol_table);
+	//const_declaration(*t, &token_table, &symbol_table);
 	
-
+	fclose(output_file);
 	// Print token stream.
 	printf(ANSI_WARN "\nTokens:\n" ANSI_RESET);
 	for (unsigned int i=0; i<token_table.len; i++) {
