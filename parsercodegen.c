@@ -180,12 +180,12 @@ const char SPECIAL_CHARS[] = {'<', '>', ':', ';', ',', '.', '=', '+', '-', '*', 
 
 /// Null-terminated array of chars for use in a symbol table.
 typedef struct Symbol {
-	const unsigned int kind;
+	unsigned int kind;
 	char string[MAX_IDENT + 1];
-	float value;
-	const unsigned int level;
-	const unsigned int  address;
-	unsigned int mark;
+	int value;
+	unsigned int level;
+	unsigned int  address;
+	bool mark;
 
 } Symbol;
 
@@ -558,6 +558,8 @@ Error messages for the tiny PL/0 Parser:
 
   ---------------------------------------------------------------------------------------- */
 
+unsigned int lexical_level = 0;
+
 int symbol_table_check(Symbol symbol, Vector *symbol_table){
 
 	/*
@@ -589,7 +591,7 @@ char* block(){
 	abort();
 }
 
-char* const_declaration(Token t, Vector const* restrict token_table, Vector *symbol_table, unsigned int index ){
+void const_declaration(Token t, Vector *token_table, Vector *symbol_table, unsigned int index ){
 
 	/*
 	CONST-DECLARATION
@@ -639,6 +641,11 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector *sym
 		}
 		Symbol *s = vector_get(*symbol_table, token_index, Symbol);
 		s->kind = 1;
+		strcpy(s->string, identifier_name);
+		s->value = next_token.data.int_literal;
+		s->level = lexical_level;
+		s->mark = 0;
+
 		
 		while(next_token.type == TK_COMMA){
 			if(next_token.type != TK_SEMICOLON){
@@ -648,7 +655,6 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector *sym
 		}
 	}
 
-	abort();
 }
 
 int var_declartaion(){
