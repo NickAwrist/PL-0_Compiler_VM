@@ -88,7 +88,7 @@ static void push_vector(Vector *const restrict list, const void* const restrict 
 	list->len += 1;
 }
 
-#define vector_get(vector, index, type) (((type*)vector.arr)[index])
+#define vector_get(vector, index, type) (&((type*)vector.arr)[index])
 
 
 
@@ -882,20 +882,20 @@ int main(const int argc, const char *const *const argv) {
 	// Print token stream.
 	printf(ANSI_WARN "\nTokens:\n" ANSI_RESET);
 	for (unsigned int i=0; i<token_table.len; i++) {
-		const Token t = vector_get(token_table, i, Token);
+		const Token t = *vector_get(token_table, i, Token);
 		printf("%d %u (%u:%u)\n", t.type, t.data.symbol_index, t.pos.line, t.pos.col);
 	}
 
 	// Print symbol table.
 	printf(ANSI_WARN "\nSymbol table:\n" ANSI_RESET);
 	for (unsigned int i=0; i<symbol_table.len; i++) {
-		printf("%s\n", vector_get(symbol_table, i, Symbol).string);
+		printf("%s\n", vector_get(symbol_table, i, Symbol)->string);
 	}
 
 	// Print source code reconstructed from token stream.
 	printf(ANSI_WARN "\nSource code reconstruction:\n" ANSI_RESET);
 	for (unsigned int i=0; i<token_table.len; i++) {
-		token_tostring(vector_get(token_table, i, Token), &symbol_table, stdout);
+		token_tostring(*vector_get(token_table, i, Token), &symbol_table, stdout);
 	}
 
 	free(token_table.arr);
