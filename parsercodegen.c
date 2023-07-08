@@ -556,13 +556,13 @@ int symbol_table_check(Symbol symbol, Vector const* restrict symbol_table){
 
 	/*
 	SYMBOLTABLECHECK (string)
-  		linear search through symbol table looking at name
-  		return index if found, -1 if not
+		linear search through symbol table looking at name
+		return index if found, -1 if not
 	*/
 
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 	for(int i= symbol_table->len-1; i>=0; i--){
-		if (strcmp(symbols[i].string, symbol->string) == 0) {
+		if (strcmp(symbols[i].string, symbol.string) == 0) {
 			return i;
 		}
 	}
@@ -580,6 +580,7 @@ char* block(){
 		STATEMENT
 	*/
 
+	abort();
 }
 
 char* const_declaration(Token t, Vector const* restrict token_table, Vector const* restrict symbol_table, unsigned int index ){
@@ -610,7 +611,7 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 
 	const Token *const tokens = (Token*)token_table->arr;
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
-	if(t.type = TK_CONST){
+	if(t.type == TK_CONST){
 		Token next_token = tokens[++index];
 		if(next_token.type != TK_IDENT){
 			printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
@@ -618,7 +619,7 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 		if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) == -1){
 			printf("ERROR, invalid identifier in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 		}
-		char* identifier_name = symbols[next_token.data.symbol_index].string;
+		const char *const identifier_name = symbols[next_token.data.symbol_index].string;
 		next_token = tokens[++index];
 		if(next_token.type != TK_EQL){
 			printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
@@ -635,6 +636,7 @@ char* const_declaration(Token t, Vector const* restrict token_table, Vector cons
 		*/
 	}
 
+	abort();
 }
 
 int var_declartaion(){
@@ -659,6 +661,7 @@ int var_declartaion(){
 		return numVars
 	*/
 
+	abort();
 }
 
 char* statement(){
@@ -751,6 +754,7 @@ char* statement(){
 			return
 	*/
 
+	abort();
 }
 
 char* condition(){
@@ -791,6 +795,7 @@ char* condition(){
 				error
 	*/
 
+	abort();
 }
 
 char* expression(){
@@ -808,6 +813,7 @@ char* expression(){
 				emit SUB
 	*/
 
+	abort();
 }
 
 char* term(){
@@ -826,6 +832,7 @@ char* term(){
 					emit DIV
 	*/
 
+	abort();
 }
 
 char* factor(){
@@ -854,6 +861,7 @@ char* factor(){
 				error
 	*/
 
+	abort();
 }
 
 int main(const int argc, const char *const *const argv) {
