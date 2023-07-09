@@ -603,7 +603,7 @@ void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_fi
 	*/
 
 	block(t, token_table, symbol_table, output_file);
-	if(t.type == TK_PERIOD)
+	if(t.type != TK_PERIOD)
 		printf("Missing period at end of program\n");
 	
 	// emit HALT
