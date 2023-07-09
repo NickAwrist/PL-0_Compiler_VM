@@ -263,7 +263,7 @@ CharType char_type(const char c) {
 static void tokenize(Vector *const restrict token_table, Vector *const restrict symbol_table, FILE *const restrict input_file) {
 	FilePos current_pos = {.line = 1, .col = 0};
 
-	while (!feof(input_file)) {
+	while (true) {
 		const char start_char = fgetc(input_file);
 
 		switch (char_type(start_char)) {
@@ -479,6 +479,11 @@ static void tokenize(Vector *const restrict token_table, Vector *const restrict 
 			}
 
 			default: {
+				// fgetc can return an EOF. This cast should deal with signed OR unsigned char type because we cast the integer return to a char.
+				if (start_char == (char)EOF) {
+					return;
+				}
+
 				char buf[10];
 				snprintf(buf, sizeof(buf)/sizeof(*buf), "%d/%c", start_char, start_char);
 
