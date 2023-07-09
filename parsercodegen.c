@@ -1032,6 +1032,8 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 
 	}else{
 		expression(t, token_table, symbol_table, code);
+		t = *vector_get(*token_table, token_table_index, Token);
+
 		if(t.type == TK_EQL){
 			t = get_next_token(token_table);
 			expression(t, token_table, symbol_table, code);
@@ -1091,6 +1093,9 @@ void expression(Token t, Vector *token_table, Vector *symbol_table, Vector *code
 	*/
 
 	printf("EXPRESSION\n");
+
+	term(t, token_table, symbol_table, code);
+	t = *vector_get(*token_table, token_table_index, Token);
 
 	while(t.type == TK_PLUS || t.type == TK_MINUS){
 		if(t.type == TK_PLUS){

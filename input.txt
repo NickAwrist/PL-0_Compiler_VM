@@ -1,4 +1,7 @@
 var a;
 begin
-    a := 5;
+	if 1 <> 1 then
+		write 1;
+	else
+		write 2;
 end.
