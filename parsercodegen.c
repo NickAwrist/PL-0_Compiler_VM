@@ -1071,7 +1071,7 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 			vector_push(code, &(Inst){OPR, 0, GEQ}, sizeof(Inst));
 
 		}else{
-			printf("Invalid operator\n");
+			err_with_pos("Invalid operator", "", t.pos);
 		}
 	}
 	
