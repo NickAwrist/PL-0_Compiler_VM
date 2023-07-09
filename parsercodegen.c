@@ -624,12 +624,12 @@ void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file
 	printf("BLOCK\n");
 
 	const_declaration(t, token_table, symbol_table);
-	int numVars = var_declaration(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table);
+	int numVars = var_declaration(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table);
 
 	// emit INC 3 + numVars
 	fprintf(output_file, "6 0 %d\n", 3 + numVars);
 
-	statement(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
+	statement(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, output_file);
 }
 
 void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
@@ -872,16 +872,18 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 			int symbol_index = t.data.symbol_index;
 			const Symbol *const symbol = vector_get(*symbol_table, symbol_index, Symbol);
 
+			debug("Symbol kind of %s is %d\n", symbol->string, symbol->kind);
+
 			if (symbol->kind != 2) {
 				err_with_pos("Expected identifier", symbol->string, t.pos);
 			}
 
-			Token becomeToken = *vector_get(*token_table, token_table_index++, Token);
+			Token becomeToken = *vector_get(*token_table, ++token_table_index, Token);
 			if (becomeToken.type != TK_BECOME) {
 				err_with_pos("Expected \":=\" after identifier", "", becomeToken.pos);
 			}
 
-			expression(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
+			expression(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, output_file);
 
 			// emit STO sym.addr
 			fprintf(output_file, "4 0 %d\n", symbol->address);
@@ -891,9 +893,9 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 		}
 		case TK_BEGIN: {
 			while (true) {
-				statement(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
+				statement(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, output_file);
 
-				Token nextToken = *vector_get(*token_table, token_table_index++, Token);
+				Token nextToken = *vector_get(*token_table, ++token_table_index, Token);
 
 				if (nextToken.type == TK_END) {
 					break;
@@ -904,7 +906,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 			}
 		}
 		case TK_IF: {
-			condition(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
+			condition(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, output_file);
 
 			abort();
 		}
