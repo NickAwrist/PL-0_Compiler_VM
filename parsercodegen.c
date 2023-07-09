@@ -845,7 +845,53 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 			return
 	*/
 
-	abort();
+	printf("STATEMENT\n");
+
+	switch (t.type) {
+		case TK_IDENT: {
+			int symbol_index = t.data.symbol_index;
+			const Symbol *const symbol = vector_get(*symbol_table, symbol_index, Symbol);
+
+			if (symbol->kind != 2) {
+				err_with_pos("Expected identifier", symbol->string, t.pos);
+			}
+
+			Token becomeToken = *vector_get(*token_table, token_table_index++, Token);
+			if (becomeToken.type != TK_BECOME) {
+				err_with_pos("Expected \":=\" after identifier", "", becomeToken.pos);
+			}
+
+			expression(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
+
+			// emit STO sym.addr
+			fprintf(output_file, "4 0 %d\n", symbol->address);
+
+			break;
+		}
+		case TK_BEGIN: {
+			while (true) {
+				statement(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
+
+				Token nextToken = *vector_get(*token_table, token_table_index++, Token);
+
+				if (nextToken.type == TK_END) {
+					break;
+				}
+				else if (nextToken.type != TK_SEMICOLON) {
+					err_with_pos("Expected \";\" or \"end\"", "", t.pos);
+				}
+			}
+		}
+		case TK_IF: {
+			condition(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
+
+			abort();
+		}
+		default:
+			abort();
+	}
+
+	exit(3);
 }
 
 void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
