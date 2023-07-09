@@ -1,2 +1,4 @@
-const c := 5;
-var a, b, d;
+var a;
+begin
+    a := 5;
+end.

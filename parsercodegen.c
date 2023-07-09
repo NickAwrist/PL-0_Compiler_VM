@@ -674,7 +674,9 @@ void block(Token t, Vector *token_table, Vector *symbol_table, Vector *identifie
 	printf("BLOCK\n");
 
 	const_declaration(t, token_table, symbol_table, identifier_table);
-	int numVars = var_declaration(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, identifier_table);
+
+	t = *vector_get(*token_table, token_table_index, Token);
+	int numVars = var_declaration(t, token_table, symbol_table, identifier_table);
 
 	// emit INC 3 + numVars
 	vector_push(code, &(Inst){INC, 0, 3 + numVars}, sizeof(Inst));
@@ -822,6 +824,9 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *
 			s->level = lexical_level;
 			s->address = numVars + 2;
 			s->mark = 0;
+
+			// Push symbol to symbol table
+			vector_push(symbol_table, s, sizeof(Symbol));
 
 			// , or ;
 			next_token = get_next_token(token_table);
