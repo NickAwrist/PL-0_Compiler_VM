@@ -602,17 +602,21 @@ Error messages for the tiny PL/0 Parser:
 	symbols
 
   ---------------------------------------------------------------------------------------- */
-void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
-void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
-void const_declaration(Token t, Vector *token_table, Vector *symbol_table);
-void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
-void term(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
-void factor(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
-int var_declaration(Token t, Vector *token_table, Vector *symbol_table);
+void expression(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
+void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
+void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table);
+int var_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table);
+void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
+void term(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
+void factor(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
 
 unsigned int lexical_level = 0;
 unsigned int token_table_index;
 unsigned int current_instruction = 0;
+
+Token get_next_token(Vector *token_table){
+	return *vector_get(*token_table, ++token_table_index, Token);
+}
 
 int symbol_table_check(Symbol symbol, Vector *symbol_table){
 
@@ -632,7 +636,7 @@ int symbol_table_check(Symbol symbol, Vector *symbol_table){
 	return -1;
 }
 
-void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
+void program(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table, Vector *code){
 
 	/*
 	PROGRAM
@@ -642,7 +646,7 @@ void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_fi
 		emit HALT
 	*/
 
-	block(t, token_table, symbol_table, output_file);
+	block(t, token_table, symbol_table, identifier_table, code);
 	if(t.type != TK_PERIOD)
 		printf("Missing period at end of program\n");
 	
@@ -650,7 +654,7 @@ void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_fi
 	vector_push(code, &(Inst){SYS, 0, 3}, sizeof(Inst));
 }
 
-void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
+void block(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table, Vector *code){
 
 	/*
 	BLOCK
@@ -662,8 +666,8 @@ void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file
 
 	printf("BLOCK\n");
 
-	const_declaration(t, token_table, symbol_table);
-	int numVars = var_declaration(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table);
+	const_declaration(t, token_table, symbol_table, identifier_table);
+	int numVars = var_declaration(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, identifier_table);
 
 	// emit INC 3 + numVars
 	vector_push(code, &(Inst){INC, 0, 3 + numVars}, sizeof(Inst));
@@ -1256,7 +1260,7 @@ int main(const int argc, const char *const *const argv) {
 
 	fclose(input_file);
 
-
+	Vector symbol_table = new_vector(256, sizeof(Symbol));
 
 	token_table_index = 0;
 	FILE *const output_file = fopen("output", "wb");
@@ -1265,7 +1269,7 @@ int main(const int argc, const char *const *const argv) {
 	Token *t = vector_get(token_table, token_table_index, Token);
 	//printf("%d\n", t->type);
 	//int a = var_declaration(*t, &token_table, &symbol_table);
-	block(*t, &token_table, &symbol_table, output_file);
+	//block(*t, &token_table, &symbol_table, output_file);
 
 	t = vector_get(token_table, token_table_index, Token);
 	//const_declaration(*t, &token_table, &symbol_table);
