@@ -1152,21 +1152,7 @@ int main(const int argc, const char *const *const argv) {
 
 	tokenize(&token_table, &symbol_table, input_file);
 
-	fclose(input_file);
 
-	token_table_index = 0;
-	FILE *const output_file = fopen("output", "wb");
-	assert(output_file != NULL, "Cannot open output file");
-
-	Token *t = vector_get(token_table, token_table_index, Token);
-	//printf("%d\n", t->type);
-	//int a = var_declaration(*t, &token_table, &symbol_table);
-	block(*t, &token_table, &symbol_table, output_file);
-
-	t = vector_get(token_table, token_table_index, Token);
-	//const_declaration(*t, &token_table, &symbol_table);
-	
-	fclose(output_file);
 	// Print token stream.
 	printf(ANSI_WARN "\nTokens:\n" ANSI_RESET);
 	for (unsigned int i=0; i<token_table.len; i++) {
@@ -1185,6 +1171,24 @@ int main(const int argc, const char *const *const argv) {
 	for (unsigned int i=0; i<token_table.len; i++) {
 		token_tostring(*vector_get(token_table, i, Token), &symbol_table, stdout);
 	}
+
+	printf("\n\n\n");
+
+	fclose(input_file);
+
+	token_table_index = 0;
+	FILE *const output_file = fopen("output", "wb");
+	assert(output_file != NULL, "Cannot open output file");
+
+	Token *t = vector_get(token_table, token_table_index, Token);
+	//printf("%d\n", t->type);
+	//int a = var_declaration(*t, &token_table, &symbol_table);
+	block(*t, &token_table, &symbol_table, output_file);
+
+	t = vector_get(token_table, token_table_index, Token);
+	//const_declaration(*t, &token_table, &symbol_table);
+	
+	fclose(output_file);
 
 	free(token_table.arr);
 	free(symbol_table.arr);
