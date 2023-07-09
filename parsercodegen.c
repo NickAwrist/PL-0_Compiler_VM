@@ -572,6 +572,7 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table);
 
 unsigned int lexical_level = 0;
 unsigned int token_table_index;
+unsigned int current_instruction = 0;
 
 int symbol_table_check(Symbol symbol, Vector *symbol_table){
 
@@ -865,6 +866,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 
 			// emit STO sym.addr
 			fprintf(output_file, "4 0 %d\n", symbol->address);
+			current_instruction++;
 
 			break;
 		}
@@ -940,6 +942,7 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 		expression(t, token_table, symbol_table, output_file);
 		// emit ODD
 		fprintf(output_file, "2 0 ODD\n");
+		current_instruction++;
 
 	}else{
 		expression(t, token_table, symbol_table, output_file);
@@ -948,36 +951,42 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_
 			expression(t, token_table, symbol_table, output_file);
 			// emit EQL
 			fprintf(output_file, "2 0 5\n");
+			current_instruction++;
 
 		}else if(t.type == TK_NEQ){
 			t = tokens[++token_table_index];
 			expression(t, token_table, symbol_table, output_file);
 			// emit NEQ
 			fprintf(output_file, "2 0 6\n");
+			current_instruction++;
 
 		}else if(t.type == TK_LESS){
 			t = tokens[++token_table_index];
 			expression(t, token_table, symbol_table, output_file);
 			// emit LSS
 			fprintf(output_file, "2 0 7\n");
+			current_instruction++;
 
 		}else if(t.type == TK_LEQ){
 			t = tokens[++token_table_index];
 			expression(t, token_table, symbol_table, output_file);
 			// emit LEQ
 			fprintf(output_file, "2 0 8\n");
+			current_instruction++;
 
 		}else if(t.type == TK_GTR){
 			t = tokens[++token_table_index];
 			expression(t, token_table, symbol_table, output_file);
 			// emit GTR
 			fprintf(output_file, "2 0 9\n");
+			current_instruction++;
 
 		}else if(t.type == TK_GEQ){
 			t = tokens[++token_table_index];
 			expression(t, token_table, symbol_table, output_file);
 			// emit GEQ
 			fprintf(output_file, "2 0 10\n");
+			current_instruction++;
 
 		}else{
 			printf("Invalid operator\n");
@@ -1010,12 +1019,14 @@ void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output
 			term(t, token_table, symbol_table, output_file);
 			// emit ADD
 			fprintf(output_file, "2 0 1\n");
+			current_instruction++;
 
 		}else{
 			t = tokens[++token_table_index];
 			term(t, token_table, symbol_table, output_file);
 			// emit SUB
 			fprintf(output_file, "2 0 2\n");
+			current_instruction++;
 		}
 	}
 
@@ -1050,12 +1061,14 @@ void term(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file)
 			factor(t, token_table, symbol_table, output_file);
 			// emit MUL
 			fprintf(output_file, "2 0 3\n");
+			current_instruction++;
 
 		}else{
 			t = tokens[++token_table_index];
 			factor(t, token_table, symbol_table, output_file);
 			// emit DIV
 			fprintf(output_file, "2 0 4\n");
+			current_instruction++;
 		}
 	}
 }
@@ -1099,15 +1112,20 @@ void factor(Token t, Vector *token_table, Vector *symbol_table, FILE *output_fil
 		if(symbols[symInx].kind == 1){
 			// LIT 0 VALUE
 			fprintf(output_file, "1 0 %d\n", symbols[symInx].value);
+			current_instruction++;
+			
 		}else if(symbols[symInx].kind == 2){
 			// LOD 0 ADDR
 			fprintf(output_file, "3 0 %d\n", symbols[symInx].address);
+			current_instruction++;
+
 		}
 		next_token = tokens[++token_table_index];
 
 	}else if(t.type == TK_NUMBER){
 		// emit LIT
 		fprintf(output_file, "1 0 %d\n", t.data.int_literal);
+		current_instruction++;
 		next_token = tokens[++token_table_index];
 
 	}else if(t.type == TK_LPARENT){
