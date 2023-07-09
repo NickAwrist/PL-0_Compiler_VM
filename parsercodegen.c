@@ -612,6 +612,7 @@ void expression(Token t, Vector *token_table, Vector *symbol_table, Vector *code
 void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
 void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table);
 int var_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table);
+void block(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table, Vector *code);
 void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
 void term(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
 void factor(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
@@ -751,7 +752,7 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vecto
 			s->mark = 0;
 
 			// Push symbol to symbol table
-			push_vector(symbol_table, s, sizeof(Symbol));
+			vector_push(symbol_table, s, sizeof(Symbol));
 
 			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
 
@@ -764,10 +765,6 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vecto
 		}
 		token_table_index++;
 	}
-	else {
-		token_table_index--;
-	}
-
 }
 
 int var_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table){
@@ -1266,21 +1263,31 @@ int main(const int argc, const char *const *const argv) {
 
 	fclose(input_file);
 
-	Vector symbol_table = new_vector(256, sizeof(Symbol));
+
 
 	token_table_index = 0;
-	FILE *const output_file = fopen("output", "wb");
-	assert(output_file != NULL, "Cannot open output file");
+	Vector symbol_table = new_vector(256, sizeof(Symbol));
+	Vector code = new_vector(256, sizeof(Inst));
+
+	// The first instruction must be this one according to assignment.
+	vector_push(&code, &(Inst){JMP, 0, 3}, sizeof(Inst));
+
 
 	Token *t = vector_get(token_table, token_table_index, Token);
-	//printf("%d\n", t->type);
-	//int a = var_declaration(*t, &token_table, &symbol_table);
-	//block(*t, &token_table, &symbol_table, output_file);
+	block(*t, &token_table, &symbol_table, &identifier_table, &code);
 
-	t = vector_get(token_table, token_table_index, Token);
-	//const_declaration(*t, &token_table, &symbol_table);
-	
+
+	FILE *const output_file = fopen("output", "w");
+	assert(output_file != NULL, "Cannot open output file");
+
+	// Output code to file.
+	for (unsigned int i=0; i<code.len; i++) {\
+		const Inst inst = *vector_get(code, i, Inst);
+		fprintf(output_file, "%d %d %d\n", inst.op, inst.l, inst.m);
+	}
+
 	fclose(output_file);
+
 
 
 	free(token_table.arr);
