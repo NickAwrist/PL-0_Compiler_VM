@@ -74,7 +74,7 @@ static Vector new_vector(const unsigned int capacity, const size_t size) {
 	return list;
 }
 
-static void push_vector(Vector *const restrict list, const void* const restrict item, const size_t size) {
+static void vector_push(Vector *const restrict list, const void* const restrict item, const size_t size) {
 	assert(list->elem_size == size, "a developer pushed the wrong thing to this vector");
 
 	if (list->len >= list->capacity) {
@@ -345,12 +345,12 @@ static void tokenize(Vector *const restrict token_table, Vector *const restrict 
 						Symbol sym = {0};
 						strncpy(sym.string, ident_buf, MAX_IDENT);
 
-						push_vector(symbol_table, &sym, sizeof(Symbol));
+						vector_push(symbol_table, &sym, sizeof(Symbol));
 					}
 				}
 
 				// Add token to the token list.
-				push_vector(token_table, &token, sizeof(Token));
+				vector_push(token_table, &token, sizeof(Token));
 				break;
 			}
 
@@ -390,7 +390,7 @@ static void tokenize(Vector *const restrict token_table, Vector *const restrict 
 				Token token = {.type = TK_NUMBER, .pos = position};
 				sscanf(num_buf, "%d", &token.data.int_literal);
 
-				push_vector(token_table, &token, sizeof(Token));
+				vector_push(token_table, &token, sizeof(Token));
 				break;
 			}
 
@@ -474,7 +474,7 @@ static void tokenize(Vector *const restrict token_table, Vector *const restrict 
 					err_with_pos("Invalid token", special_buf, position);
 				}
 
-				push_vector(token_table, &token, sizeof(Token));
+				vector_push(token_table, &token, sizeof(Token));
 				break;
 			}
 
