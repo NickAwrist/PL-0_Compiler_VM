@@ -88,7 +88,13 @@ static void vector_push(Vector *const restrict list, const void* const restrict 
 	list->len += 1;
 }
 
-#define vector_get(vector, index, type) (&((type*)(vector).arr)[index])
+static void* _vector_get(Vector *const restrict list, const unsigned int index, const size_t size) {
+	assert(list->elem_size == size, "Bad type provided to vector_get");
+	assert(index < list->len, "Out of bounds vector access");
+
+	return ((char*)list->arr) + (size * index);
+}
+#define vector_get(vector, index, type) ((type*)_vector_get(&vector, index, sizeof(type)))
 
 
 
