@@ -559,8 +559,11 @@ Error messages for the tiny PL/0 Parser:
   ---------------------------------------------------------------------------------------- */
 void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
+void const_declaration(Token t, Vector *token_table, Vector *symbol_table);
+void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void term(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void factor(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
+int var_declaration(Token t, Vector *token_table, Vector *symbol_table);
 
 unsigned int lexical_level = 0;
 unsigned int token_table_index;
@@ -583,7 +586,7 @@ int symbol_table_check(Symbol symbol, Vector *symbol_table){
 	return -1;
 }
 
-void block(){
+void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
 	BLOCK
@@ -593,7 +596,15 @@ void block(){
 		STATEMENT
 	*/
 
-	abort();
+	printf("BLOCK\n");
+
+	const_declaration(t, token_table, symbol_table);
+	int numVars = var_declaration(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table);
+
+	// emit INC 3 + numVars
+	fprintf(output_file, "6 0 %d\n", 3 + numVars);
+
+	statement(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
 }
 
 void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
@@ -736,7 +747,7 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 	return numVars;
 }
 
-void statement(){
+void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
 	STATEMENT
@@ -1096,7 +1107,7 @@ int main(const int argc, const char *const *const argv) {
 	Token *t = vector_get(token_table, token_table_index, Token);
 	//printf("%d\n", t->type);
 	//int a = var_declaration(*t, &token_table, &symbol_table);
-	condition(*t, &token_table, &symbol_table, output_file);
+	block(*t, &token_table, &symbol_table, output_file);
 
 	t = vector_get(token_table, token_table_index, Token);
 	//const_declaration(*t, &token_table, &symbol_table);
