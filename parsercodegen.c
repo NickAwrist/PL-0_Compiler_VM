@@ -564,15 +564,21 @@ Error messages for the tiny PL/0 Parser:
   ---------------------------------------------------------------------------------------- */
 void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
-void const_declaration(Token t, Vector *token_table, Vector *symbol_table);
+void const_declaration(Token t, Vector *token_table, Vector *symbol_table,  Vector *identifier_table);
+int var_declaration(Token t, Vector *token_table, Vector *symbol_table,  Vector *identifier_table);
 void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void term(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void factor(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
-int var_declaration(Token t, Vector *token_table, Vector *symbol_table);
+void block(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table, FILE *output_file);
+void program(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table, FILE *output_file);
 
 unsigned int lexical_level = 0;
-unsigned int token_table_index;
+unsigned int token_table_index = 0;
 unsigned int current_instruction = 0;
+
+Token get_next_token(Vector *token_table){
+	return *vector_get(*token_table, ++token_table_index, Token);
+}
 
 int symbol_table_check(Symbol symbol, Vector *symbol_table){
 
@@ -592,7 +598,7 @@ int symbol_table_check(Symbol symbol, Vector *symbol_table){
 	return -1;
 }
 
-void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
+void program(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table, FILE *output_file){
 
 	/*
 	PROGRAM
@@ -602,7 +608,7 @@ void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_fi
 		emit HALT
 	*/
 
-	block(t, token_table, symbol_table, output_file);
+	block(t, token_table, symbol_table, identifier_table, output_file);
 	if(t.type != TK_PERIOD)
 		printf("Missing period at end of program\n");
 	
@@ -611,7 +617,7 @@ void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_fi
 	current_instruction++;
 }
 
-void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
+void block(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table , FILE *output_file){
 
 	/*
 	BLOCK
@@ -623,8 +629,8 @@ void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file
 
 	printf("BLOCK\n");
 
-	const_declaration(t, token_table, symbol_table);
-	int numVars = var_declaration(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table);
+	const_declaration(t, token_table, symbol_table, identifier_table);
+	int numVars = var_declaration(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, identifier_table);
 
 	// emit INC 3 + numVars
 	fprintf(output_file, "6 0 %d\n", 3 + numVars);
@@ -632,7 +638,7 @@ void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file
 	statement(*vector_get(*token_table, token_table_index++, Token), token_table, symbol_table, output_file);
 }
 
-void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
+void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table){
 
 	/*
 	CONST-DECLARATION
@@ -658,47 +664,56 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
 			get next token
 	*/
 
-	printf("CONST_DECLARATION\n");
-	const Token *const tokens = (Token*)token_table->arr;
+	printf("\nCONST_DECLARATION\n\n");
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
+	
 	Token next_token;
+
 	if(t.type == TK_CONST){
 
 		do{
 			// Identifier
-			next_token = tokens[++token_table_index];
+			next_token = get_next_token(token_table);
 			if(next_token.type != TK_IDENT){
 				printf("ERROR, invalid token type in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+				return;
 			}
 			if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) != -1){
 				printf("ERROR, identifier already defined in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+				return;
 			}
 
 			int token_index = next_token.data.symbol_index;
 
 			// :=
-			next_token = tokens[++token_table_index];
+			next_token = get_next_token(token_table);
 			if(next_token.type != TK_BECOME){
 				printf("ERROR, expected ':=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+				return;
 			}
 
 			// number
-			next_token = tokens[++token_table_index];
+			next_token = get_next_token(token_table);
 			if(next_token.type != TK_NUMBER){
 				printf("ERROR, expected a number in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+				return;
 			}
 		
-			// Edit symbol table
-			Symbol *s = vector_get(*symbol_table, token_index, Symbol);
+			// Add symbol to symbol table
+			// Copy symbol from identifier table (comes with its string) and add its other propertiess
+			Symbol *s = vector_get(*identifier_table, token_index, Symbol);
 			s->kind = 1;
 			s->value = next_token.data.int_literal;
 			s->level = lexical_level;
 			s->mark = 0;
 
+			// Push symbol to symbol table
+			push_vector(symbol_table, s, sizeof(Symbol));
+
 			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
 
 			// , or ;
-			next_token = tokens[++token_table_index];
+			next_token = get_next_token(token_table);
 		}while(next_token.type == TK_COMMA); 
 
 		if(next_token.type != TK_SEMICOLON){
@@ -709,7 +724,7 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
 
 }
 
-int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
+int var_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table){
 
 	/*
 	VAR-DECLARATION – returns number of variables
@@ -731,16 +746,16 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 		return numVars
 	*/
 
+	Token next_token;
+	printf("\nVAR_DECLARATION\n\n");
+	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 	int numVars = 0;
+
 	if(t.type == TK_VAR){
-		Token next_token;
-		printf("VAR_DECLARATION\n");
-		const Token *const tokens = (Token*)token_table->arr;
-		const Symbol *const symbols = (Symbol*)symbol_table->arr;
 		do{
 			numVars++;
 			// Identifier
-			next_token = tokens[++token_table_index];
+			next_token = get_next_token(token_table);
 			if(next_token.type == TK_SEMICOLON) {
 				break;
 			}
@@ -751,18 +766,20 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 				printf("ERROR, identifier already defined in var declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 			}
 
-			// Edit symbol table
+			// Add symbol to symbol table
+			// Copy symbol from identifier table (comes with its string) and add its other propertiess
 			int token_index = next_token.data.symbol_index; 
-
-			Symbol *s = vector_get(*symbol_table, token_index, Symbol);
+			Symbol *s = vector_get(*identifier_table, token_index, Symbol);
 			s->kind = 2;
 			s->value = 0;
 			s->level = lexical_level;
 			s->address = numVars + 2;
 			s->mark = 0;
+			// Push symbol to symbol table
+			push_vector(symbol_table, s, sizeof(Symbol));
 
 			// , or ;
-			next_token = tokens[++token_table_index];
+			next_token = get_next_token(token_table);
 
 			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Adress= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].address, symbols[token_index].level, symbols[token_index].mark);
 		}while(next_token.type == TK_COMMA);
@@ -1185,9 +1202,9 @@ int main(const int argc, const char *const *const argv) {
 
 
 	Vector token_table = new_vector(256, sizeof(Token));
-	Vector symbol_table = new_vector(256, sizeof(Symbol));
+	Vector identifier_table = new_vector(256, sizeof(Symbol));
 
-	tokenize(&token_table, &symbol_table, input_file);
+	tokenize(&token_table, &identifier_table, input_file);
 
 
 	// Print token stream.
@@ -1198,32 +1215,34 @@ int main(const int argc, const char *const *const argv) {
 	}
 
 	// Print symbol table.
-	printf(ANSI_WARN "\nSymbol table:\n" ANSI_RESET);
-	for (unsigned int i=0; i<symbol_table.len; i++) {
-		printf("%s\n", vector_get(symbol_table, i, Symbol)->string);
+	printf(ANSI_WARN "\nIdentifier table:\n" ANSI_RESET);
+	for (unsigned int i=0; i<identifier_table.len; i++) {
+		printf("%s\n", vector_get(identifier_table, i, Symbol)->string);
 	}
 
 	// Print source code reconstructed from token stream.
 	printf(ANSI_WARN "\nSource code reconstruction:\n" ANSI_RESET);
 	for (unsigned int i=0; i<token_table.len; i++) {
-		token_tostring(*vector_get(token_table, i, Token), &symbol_table, stdout);
+		token_tostring(*vector_get(token_table, i, Token), &identifier_table, stdout);
 	}
 
 	printf("\n\n\n");
 
 	fclose(input_file);
 
-	token_table_index = 0;
+
+	// HW 3 MAIN
+
+	Vector symbol_table = new_vector(256, sizeof(Symbol));
+
 	FILE *const output_file = fopen("output", "wb");
 	assert(output_file != NULL, "Cannot open output file");
 
 	Token *t = vector_get(token_table, token_table_index, Token);
-	//printf("%d\n", t->type);
-	//int a = var_declaration(*t, &token_table, &symbol_table);
-	block(*t, &token_table, &symbol_table, output_file);
+	const_declaration(*t, &token_table, &symbol_table, &identifier_table);
 
 	t = vector_get(token_table, token_table_index, Token);
-	//const_declaration(*t, &token_table, &symbol_table);
+	int a = var_declaration(*t, &token_table, &symbol_table, &identifier_table);
 	
 	fclose(output_file);
 
