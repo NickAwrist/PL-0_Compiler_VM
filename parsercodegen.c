@@ -100,7 +100,7 @@ static void* _vector_get(Vector *const restrict list, const unsigned int index, 
 
 /// All valid token numbers. Named like the assignment says but without the trailing "sym".
 typedef enum TokenType {
-	TK_SKIP = 1,
+	TK_ODD = 1,
 	TK_IDENT,
 	TK_NUMBER,
 	TK_PLUS,
@@ -133,7 +133,6 @@ typedef enum TokenType {
 	TK_WRITE,
 	TK_READ,
 	TK_ELSE,
-	TK_ODD, // This one was not originally here.
 } TokenType;
 
 
