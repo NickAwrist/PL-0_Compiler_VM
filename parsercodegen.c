@@ -592,7 +592,7 @@ int symbol_table_check(Symbol symbol, Vector *symbol_table){
 	return -1;
 }
 
-void program(){
+void program(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
 	PROGRAM
@@ -602,6 +602,13 @@ void program(){
 		emit HALT
 	*/
 
+	block(t, token_table, symbol_table, output_file);
+	if(t.type == TK_PERIOD)
+		printf("Missing period at end of program\n");
+	
+	// emit HALT
+	fprintf(output_file, "9 0 3\n");
+	current_instruction++;
 }
 
 void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
