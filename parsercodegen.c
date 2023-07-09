@@ -592,6 +592,18 @@ int symbol_table_check(Symbol symbol, Vector *symbol_table){
 	return -1;
 }
 
+void program(){
+
+	/*
+	PROGRAM
+		BLOCK
+		if token != periodsym
+			error
+		emit HALT
+	*/
+
+}
+
 void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file){
 
 	/*
