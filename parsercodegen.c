@@ -721,8 +721,11 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 			numVars++;
 			// Identifier
 			next_token = tokens[++token_table_index];
-			if(next_token.type != TK_IDENT){
-				printf("ERROR, invalid token type in var declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			if(next_token.type == TK_SEMICOLON) {
+				break;
+			}
+			else if(next_token.type != TK_IDENT){
+				err_with_pos("Expected identifier or \";\"", "", next_token.pos);
 			}
 			if(symbol_table_check(symbols[next_token.data.symbol_index], symbol_table) != -1){
 				printf("ERROR, identifier already defined in var declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
