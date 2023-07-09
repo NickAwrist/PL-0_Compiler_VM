@@ -1022,10 +1022,9 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 	*/
 
 	printf("CONDITION\n");
-	const Token *const tokens = (Token*)token_table->arr;
 
 	if(t.type == TK_ODD){
-		t = tokens[++token_table_index];
+		t = get_next_token(token_table);
 		expression(t, token_table, symbol_table, code);
 		// emit ODD
 		//vector_push(code, &(Inst){OPR, 0, });
@@ -1034,37 +1033,37 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 	}else{
 		expression(t, token_table, symbol_table, code);
 		if(t.type == TK_EQL){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			expression(t, token_table, symbol_table, code);
 			// emit EQL
 			vector_push(code, &(Inst){OPR, 0, EQL}, sizeof(Inst));
 
 		}else if(t.type == TK_NEQ){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			expression(t, token_table, symbol_table, code);
 			// emit NEQ
 			vector_push(code, &(Inst){OPR, 0, NEQ}, sizeof(Inst));
 
 		}else if(t.type == TK_LESS){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			expression(t, token_table, symbol_table, code);
 			// emit LSS
 			vector_push(code, &(Inst){OPR, 0, LSS}, sizeof(Inst));
 
 		}else if(t.type == TK_LEQ){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			expression(t, token_table, symbol_table, code);
 			// emit LEQ
 			vector_push(code, &(Inst){OPR, 0, LEQ}, sizeof(Inst));
 
 		}else if(t.type == TK_GTR){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			expression(t, token_table, symbol_table, code);
 			// emit GTR
 			vector_push(code, &(Inst){OPR, 0, GTR}, sizeof(Inst));
 
 		}else if(t.type == TK_GEQ){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			expression(t, token_table, symbol_table, code);
 			// emit GEQ
 			vector_push(code, &(Inst){OPR, 0, GEQ}, sizeof(Inst));
@@ -1092,17 +1091,16 @@ void expression(Token t, Vector *token_table, Vector *symbol_table, Vector *code
 	*/
 
 	printf("EXPRESSION\n");
-	const Token *const tokens = (Token*)token_table->arr;
 
 	while(t.type == TK_PLUS || t.type == TK_MINUS){
 		if(t.type == TK_PLUS){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			term(t, token_table, symbol_table, code);
 			// emit ADD
 			vector_push(code, &(Inst){OPR, 0, ADD}, sizeof(Inst));
 
 		}else{
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			term(t, token_table, symbol_table, code);
 			// emit SUB
 			vector_push(code, &(Inst){OPR, 0, SUB}, sizeof(Inst));
@@ -1127,22 +1125,21 @@ void term(Token t, Vector *token_table, Vector *symbol_table, Vector *code){
 					emit DIV
 	*/
 	printf("TERM\n");
-	const Token *const tokens = (Token*)token_table->arr;
 
 	printf("PRE FACTOR SYMBOL %d\n", t.type);	
 	factor(t, token_table, symbol_table, code);
-	t = tokens[token_table_index];
+	t = *vector_get(*token_table, token_table_index, Token);
 	printf("POST FACTOR SYMBOL %d\n", t.type);
 
 	while(t.type == TK_MULT || t.type == TK_SLASH){
 		if(t.type == TK_MULT){
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			factor(t, token_table, symbol_table, code);
 			// emit MUL
 			vector_push(code, &(Inst){OPR, 0, MUL}, sizeof(Inst));
 
 		}else{
-			t = tokens[++token_table_index];
+			t = get_next_token(token_table);
 			factor(t, token_table, symbol_table, code);
 			// emit DIV
 			vector_push(code, &(Inst){OPR, 0, DIV}, sizeof(Inst));
@@ -1177,7 +1174,6 @@ void factor(Token t, Vector *token_table, Vector *symbol_table, Vector *code){
 	*/
 
 	printf("FACTOR\n");
-	const Token *const tokens = (Token*)token_table->arr;
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 	Token next_token;
 
@@ -1195,19 +1191,19 @@ void factor(Token t, Vector *token_table, Vector *symbol_table, Vector *code){
 			vector_push(code, &(Inst){LOD, 0, symbols[symInx].address}, sizeof(Inst));
 
 		}
-		next_token = tokens[++token_table_index];
+		next_token = get_next_token(token_table);
 
 	}else if(t.type == TK_NUMBER){
 		// emit LIT
 		vector_push(code, &(Inst){LIT, 0, t.data.int_literal}, sizeof(Inst));
-		next_token = tokens[++token_table_index];
+		next_token = get_next_token(token_table);
 
 	}else if(t.type == TK_LPARENT){
-		next_token = tokens[++token_table_index];
+		next_token = get_next_token(token_table);
 		expression(next_token, token_table, symbol_table, code);
 		if(next_token.type != TK_RPARENT){
 			printf("Inbalanced parenthesis\n");
-			next_token = tokens[++token_table_index];
+			next_token = get_next_token(token_table);
 		}
 
 	}else{
@@ -1229,7 +1225,6 @@ void factor(Token t, Vector *token_table, Vector *symbol_table, Vector *code){
 		- EXPRESSION testing
 		- CONDITION testing
 		- STATEMENT
-		- BLOCK
 */
 
 int main(const int argc, const char *const *const argv) {
