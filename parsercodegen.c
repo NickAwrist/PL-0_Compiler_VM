@@ -563,6 +563,7 @@ Error messages for the tiny PL/0 Parser:
 
   ---------------------------------------------------------------------------------------- */
 void expression(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
+void block(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void condition(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
 void const_declaration(Token t, Vector *token_table, Vector *symbol_table);
 void statement(Token t, Vector *token_table, Vector *symbol_table, FILE *output_file);
@@ -706,6 +707,9 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table){
 		}
 		token_table_index++;
 	}
+	else {
+		token_table_index--;
+	}
 
 }
 
@@ -742,7 +746,11 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 			// Identifier
 			next_token = tokens[++token_table_index];
 			if(next_token.type == TK_SEMICOLON) {
+				token_table_index++;
 				break;
+			}
+			else if(next_token.type == TK_COMMA) {
+				continue;
 			}
 			else if(next_token.type != TK_IDENT){
 				err_with_pos("Expected identifier or \";\"", "", next_token.pos);
@@ -760,6 +768,8 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table){
 			s->level = lexical_level;
 			s->address = numVars + 2;
 			s->mark = 0;
+
+			debug("Updated symbol %s\n", s->string);
 
 			// , or ;
 			next_token = tokens[++token_table_index];
