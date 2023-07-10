@@ -1066,6 +1066,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 				err_with_pos("Expected variable", symbol->string, t.pos);
 			}
 
+			t = get_next_token(token_table);
 			// emit READ
 			vector_push(code, &(Inst){SYS, 0, 2}, sizeof(Inst));
 			// emit STO symbol.address

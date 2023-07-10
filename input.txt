@@ -1,9 +1,8 @@
 var a, b;
 begin
-	a := 200;
-	b := 300;
-	xor 1 <> 1 then
-		write a;
+    read a;
+    xor a = 1 then
+        write 1;
     else
-        a := 1;
+        write 2;
 end.
