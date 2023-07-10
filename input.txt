@@ -1,11 +1,9 @@
-const c1 := 2, c2 := 1010;
 var a, b;
 begin
-	a := 1;
-	b := 2;
-
-	if a = 1 then
+	a := 200;
+	b := 300;
+	xor 1 <> 1 then
 		write a;
-	xor
-		write b;
+    else
+        a := 1;
 end.

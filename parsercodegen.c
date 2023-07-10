@@ -653,6 +653,7 @@ void program(Token t, Vector *token_table, Vector *symbol_table, Vector *identif
 	*/
 
 	block(t, token_table, symbol_table, identifier_table, code);
+	t = get_next_token(token_table);
 	if(t.type != TK_PERIOD)
 		printf("Missing period at end of program\n");
 	
@@ -932,9 +933,11 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 	*/
 
 	printf("STATEMENT\n");
+	printf("T TYPE IS %d\n", t.type);
 
 	switch (t.type) {
 		case TK_IDENT: {
+			printf("--IDENT--\n");
 			int symbol_index = t.data.symbol_index;
 			const Symbol *const symbol = vector_get(*symbol_table, symbol_index, Symbol);
 
@@ -957,6 +960,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		}
 		
 		case TK_BEGIN: {
+			printf("--BEGIN--\n");
 			do {
 				debug("---- Start ----\n");
 				t = get_next_token(token_table);
@@ -976,6 +980,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 			break;
 		}
 		case TK_IF: {
+			printf("--IF--\n");
 			condition(get_next_token(token_table), token_table, symbol_table, code);
 
 			// emit JPC
@@ -995,7 +1000,10 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		}
 
 		case TK_XOR: {
-			condition(get_next_token(token_table), token_table, symbol_table, code);
+			printf("--XOR--\n");
+			t = get_next_token(token_table);
+			printf("BEFORE XOR CONDITION T IS %d\n", t.type);
+			condition(t, token_table, symbol_table, code);
 
 			// emit JPC
 			vector_push(code, &(Inst){JPC, 0, 0}, sizeof(Inst));
@@ -1021,6 +1029,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		}
 
 		case TK_WHILE: {
+			printf("--WHILE--\n");
 			const unsigned int loop_head_idx = code->len;
 
 			condition(get_next_token(token_table), token_table, symbol_table, code);
@@ -1045,6 +1054,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		}
 
 		case TK_READ: {
+			printf("--READ--\n");
 			const Token ident_token = get_next_token(token_table);
 			if (ident_token.type != TK_IDENT) {
 				err_with_pos("Expected identifier", "", ident_token.pos);
@@ -1065,10 +1075,16 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		}
 
 		case TK_WRITE: {
-			expression(get_next_token(token_table), token_table, symbol_table, code);
+			printf("--WRITE--\n");
+			t = get_next_token(token_table);
+			expression(t, token_table, symbol_table, code);
 			// emit WRITE
 			vector_push(code, &(Inst){SYS, 0, 1}, sizeof(Inst));
 
+			break;
+		}
+
+		case TK_END: {
 			break;
 		}
 
