@@ -619,6 +619,7 @@ void factor(Token t, Vector *token_table, Vector *symbol_table, Vector *code);
 unsigned int lexical_level = 0;
 unsigned int token_table_index;
 unsigned int current_instruction = 0;
+Vector *ident_table;
 
 Token get_next_token(Vector *token_table){
 	return *vector_get(*token_table, ++token_table_index, Token);
@@ -640,6 +641,26 @@ int symbol_table_check(Symbol symbol, Vector *symbol_table){
 	}
 
 	return -1;
+}
+
+/// Returns a pointer to the `Symbol` in the `symbol_table` matching the name `ident` if it is not marked, or NULL otherwise.
+Symbol* symbol_table_get(Vector *symbol_table, const unsigned int ident_index) {
+	const Symbol *const ident = vector_get(*ident_table, ident_index, Symbol);
+
+	if (symbol_table->len != 0) {
+		for (long i=symbol_table->len - 1;; i--) {
+			Symbol *const sym = vector_get(*symbol_table, i, Symbol);
+			if (sym->mark == 0 && strncmp(ident->string, sym->string, MAX_IDENT) == 0) {
+				return sym;
+			}
+
+			if (i == 0) {
+				break;
+			}
+		}
+	}
+
+	return NULL;
 }
 
 void program(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table, Vector *code){
@@ -936,7 +957,12 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		case TK_IDENT: {
 			printf("--IDENT--\n");
 			int symbol_index = t.data.symbol_index;
-			const Symbol *const symbol = vector_get(*symbol_table, symbol_index, Symbol);
+			debug("%d %d\n", symbol_index, symbol_table->len);
+			const Symbol *const symbol = symbol_table_get(symbol_table, symbol_index);
+
+			if (symbol == NULL) {
+				err_with_pos("No such variable", "", t.pos);
+			}
 
 			debug("Symbol kind of %s is %d\n", symbol->string, symbol->kind);
 
@@ -1378,6 +1404,7 @@ int main(const int argc, const char *const *const argv) {
 
 
 	token_table_index = 0;
+	ident_table = &identifier_table;
 	Vector symbol_table = new_vector(256, sizeof(Symbol));
 	Vector code = new_vector(256, sizeof(Inst));
 
