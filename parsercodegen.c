@@ -943,14 +943,13 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 			if (symbol->kind != 2) {
 				err_with_pos("Expected identifier", symbol->string, t.pos);
 			}
-			
+
 			Token becomeToken = get_next_token(token_table);
 			if (becomeToken.type != TK_BECOME) {
 				err_with_pos("Expected \":=\" after identifier", "", becomeToken.pos);
 			}
 
 			expression(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, code);
-			printf("AFTER EXPRESSION T IS %d\n", vector_get(*token_table, token_table_index, Token)->type);
 			// emit STO sym.addr
 			vector_push(code, &(Inst){STO, 0, symbol->address}, sizeof(Inst));
 
@@ -983,9 +982,9 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 			vector_push(code, &(Inst){JPC, 0, 0}, sizeof(Inst));
 			Inst *const jmp_inst = vector_get(*code, code->len - 1, Inst);
 
-			Token nextToken = get_next_token(token_table);
-			if (nextToken.type != TK_THEN) {
-				err_with_pos("Expected \"then\"", "", nextToken.pos);
+			t = *vector_get(*token_table, token_table_index, Token);
+			if (t.type != TK_THEN) {
+				err_with_pos("Expected \"then\"", "", t.pos);
 			}
 
 			statement(get_next_token(token_table), token_table, symbol_table, code);
@@ -1002,9 +1001,9 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 			vector_push(code, &(Inst){JPC, 0, 0}, sizeof(Inst));
 			Inst *const jmp_inst = vector_get(*code, code->len - 1, Inst);
 
-			Token nextToken = get_next_token(token_table);
-			if (nextToken.type != TK_THEN) {
-				err_with_pos("Expected \"then\"", "", nextToken.pos);
+			t = *vector_get(*token_table, token_table_index, Token);
+			if (t.type != TK_THEN) {
+				err_with_pos("Expected \"then\"", "", t.pos);
 			}
 
 			statement(get_next_token(token_table), token_table, symbol_table, code);
