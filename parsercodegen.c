@@ -969,17 +969,103 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 					err_with_pos("Expected \";\" or \"end\"", "", t.pos);
 				}
 			}
+			break;
 		}
 		case TK_IF: {
-			condition(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, code);
+			condition(get_next_token(token_table), token_table, symbol_table, code);
 
-			abort();
+			// emit JPC
+			vector_push(code, &(Inst){JPC, 0, 0}, sizeof(Inst));
+			Inst *const jmp_inst = vector_get(*code, code->len - 1, Inst);
+
+			Token nextToken = get_next_token(token_table);
+			if (nextToken.type != TK_THEN) {
+				err_with_pos("Expected \"then\"", "", nextToken.pos);
+			}
+
+			statement(get_next_token(token_table), token_table, symbol_table, code);
+
+			jmp_inst->m = 3*(code->len - 1);
+
+			break;
+		}
+		case TK_XOR: {
+			condition(get_next_token(token_table), token_table, symbol_table, code);
+
+			// emit JPC
+			vector_push(code, &(Inst){JPC, 0, 0}, sizeof(Inst));
+			Inst *const jmp_inst = vector_get(*code, code->len - 1, Inst);
+
+			Token nextToken = get_next_token(token_table);
+			if (nextToken.type != TK_THEN) {
+				err_with_pos("Expected \"then\"", "", nextToken.pos);
+			}
+
+			statement(get_next_token(token_table), token_table, symbol_table, code);
+
+			Token else_token = get_next_token(token_table);
+			if (else_token.type != TK_ELSE) {
+				err_with_pos("Expected \"else\"", "", else_token.pos);
+			}
+
+			statement(get_next_token(token_table), token_table, symbol_table, code);
+
+			jmp_inst->m = 3*(code->len - 1);
+
+			break;
+		}
+		case TK_WHILE: {
+			const unsigned int loop_head_idx = code->len;
+
+			condition(get_next_token(token_table), token_table, symbol_table, code);
+
+			Token do_token = get_next_token(token_table);
+			if (do_token.type != TK_THEN) {
+				err_with_pos("Expected \"do\"", "", do_token.pos);
+			}
+
+			// emit JPC
+			vector_push(code, &(Inst){JPC, 0, 0}, sizeof(Inst));
+			Inst *const jpc_inst = vector_get(*code, code->len - 1, Inst);
+
+			statement(get_next_token(token_table), token_table, symbol_table, code);
+
+			// emit JMP
+			vector_push(code, &(Inst){JMP, 0, loop_head_idx}, sizeof(Inst));
+
+			jpc_inst->m = 3*(code->len - 1);
+
+			break;
+		}
+		case TK_READ: {
+			const Token ident_token = get_next_token(token_table);
+			if (ident_token.type != TK_IDENT) {
+				err_with_pos("Expected identifier", "", ident_token.pos);
+			}
+
+			int symbol_index = ident_token.data.symbol_index;
+			const Symbol *const symbol = vector_get(*symbol_table, symbol_index, Symbol);
+			if (symbol->kind != 2) {
+				err_with_pos("Expected variable", symbol->string, t.pos);
+			}
+
+			// emit READ
+			vector_push(code, &(Inst){SYS, 0, 2}, sizeof(Inst));
+			// emit STO symbol.address
+			vector_push(code, &(Inst){STO, 0, symbol->address}, sizeof(Inst));
+
+			break;
+		}
+		case TK_WRITE: {
+			expression(get_next_token(token_table), token_table, symbol_table, code);
+			// emit WRITE
+			vector_push(code, &(Inst){SYS, 0, 1}, sizeof(Inst));
+
+			break;
 		}
 		default:
-			abort();
+			err_with_pos("Unhandled token", "", t.pos);
 	}
-
-	exit(3);
 }
 
 void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code){
@@ -1278,7 +1364,7 @@ int main(const int argc, const char *const *const argv) {
 
 
 	Token *t = vector_get(token_table, token_table_index, Token);
-	block(*t, &token_table, &symbol_table, &identifier_table, &code);
+	program(*t, &token_table, &symbol_table, &identifier_table, &code);
 
 
 	FILE *const output_file = fopen("output", "w");
