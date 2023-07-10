@@ -731,10 +731,10 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vecto
 
 			int token_index = next_token.data.symbol_index;
 
-			// :=
+			// =
 			next_token = get_next_token(token_table);
-			if(next_token.type != TK_BECOME){
-				printf("ERROR, expected ':=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
+			if(next_token.type != TK_EQL){
+				printf("ERROR, expected '=' in constant declaration Line: %d Col: %d\n", next_token.pos.line, next_token.pos.col);
 				return;
 			}
 
@@ -755,8 +755,6 @@ void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vecto
 
 			// Push symbol to symbol table
 			vector_push(symbol_table, s, sizeof(Symbol));
-
-			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].level, symbols[token_index].mark);
 
 			// , or ;
 			next_token = get_next_token(token_table);
@@ -831,7 +829,6 @@ int var_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *
 			// , or ;
 			next_token = get_next_token(token_table);
 
-			printf("Symbol from table:\n Kind= %d Name= %s Value= %d Adress= %d Level= %d Mark= %d\n", symbols[token_index].kind, symbols[token_index].string, symbols[token_index].value, symbols[token_index].address, symbols[token_index].level, symbols[token_index].mark);
 		}while(next_token.type == TK_COMMA);
 
 		if(next_token.type != TK_SEMICOLON){
@@ -1034,9 +1031,9 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 
 			condition(get_next_token(token_table), token_table, symbol_table, code);
 
-			Token do_token = get_next_token(token_table);
-			if (do_token.type != TK_THEN) {
-				err_with_pos("Expected \"do\"", "", do_token.pos);
+			t = *vector_get(*token_table, token_table_index, Token);
+			if (t.type != TK_DO) {
+				err_with_pos("Expected \"do\"", "", t.pos);
 			}
 
 			// emit JPC
@@ -1066,7 +1063,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 				err_with_pos("Expected variable", symbol->string, t.pos);
 			}
 
-			t = get_next_token(token_table);
+			get_next_token(token_table);
 			// emit READ
 			vector_push(code, &(Inst){SYS, 0, 2}, sizeof(Inst));
 			// emit STO symbol.address
@@ -1138,8 +1135,8 @@ void condition(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		t = get_next_token(token_table);
 		expression(t, token_table, symbol_table, code);
 		// emit ODD
-		//vector_push(code, &(Inst){OPR, 0, });
-		err_with_pos("Odd operator not implemented", "", t.pos);
+		vector_push(code, &(Inst){OPR, 0, 11}, sizeof(Inst));
+		//err_with_pos("Odd operator not implemented", "", t.pos);
 
 	}else{
 		expression(t, token_table, symbol_table, code);

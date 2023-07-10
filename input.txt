@@ -1,8 +1,18 @@
-var a, b;
+const a = 2, b = 3;
+var x, y, z;
 begin
-    read a;
-    xor a = 1 then
-        write 1;
-    else
-        write 2;
+    /* This code is going to do a bunch of rando stuff
+    in the hopes that your code can work... *hopefully**/
+    x := a + 5;
+    y := a * (x - b);
+    z := (b + y * x) / 10;
+    read z;
+    if y <> x then
+        write y;
+    xor odd y + z then
+        z := y;
+    else 
+        y := z;
+    while z < 3 do
+        z := z + 1;
 end.
