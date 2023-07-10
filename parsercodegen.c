@@ -943,8 +943,8 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 			if (symbol->kind != 2) {
 				err_with_pos("Expected identifier", symbol->string, t.pos);
 			}
-
-			Token becomeToken = *vector_get(*token_table, ++token_table_index, Token);
+			
+			Token becomeToken = get_next_token(token_table);
 			if (becomeToken.type != TK_BECOME) {
 				err_with_pos("Expected \":=\" after identifier", "", becomeToken.pos);
 			}
