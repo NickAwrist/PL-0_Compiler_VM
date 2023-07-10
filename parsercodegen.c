@@ -944,12 +944,12 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 				err_with_pos("Expected identifier", symbol->string, t.pos);
 			}
 
-			Token becomeToken = *vector_get(*token_table, ++token_table_index, Token);
+			Token becomeToken = get_next_token(token_table);
 			if (becomeToken.type != TK_BECOME) {
 				err_with_pos("Expected \":=\" after identifier", "", becomeToken.pos);
 			}
 
-			expression(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, code);
+			expression(get_next_token(token_table), token_table, symbol_table, code);
 
 			// emit STO sym.addr
 			vector_push(code, &(Inst){STO, 0, symbol->address}, sizeof(Inst));
@@ -958,17 +958,21 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 		}
 		case TK_BEGIN: {
 			while (true) {
-				statement(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, code);
+				statement(get_next_token(token_table), token_table, symbol_table, code);
 
-				Token nextToken = *vector_get(*token_table, ++token_table_index, Token);
+				Token next_token = get_next_token(token_table);
 
-				if (nextToken.type == TK_END) {
+				if (next_token.type != TK_SEMICOLON) {
+					token_table_index--;
 					break;
 				}
-				else if (nextToken.type != TK_SEMICOLON) {
-					err_with_pos("Expected \";\" or \"end\"", "", t.pos);
-				}
 			}
+
+			const Token end_token = get_next_token(token_table);
+			if (end_token.type != TK_END) {
+				err_with_pos("Expected \"end\"", "", end_token.pos);
+			}
+
 			break;
 		}
 		case TK_IF: {
