@@ -680,7 +680,7 @@ void block(Token t, Vector *token_table, Vector *symbol_table, Vector *identifie
 	// emit INC 3 + numVars
 	vector_push(code, &(Inst){INC, 0, 3 + numVars}, sizeof(Inst));
 
-	statement(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, code);
+	statement(*vector_get(*token_table, token_table_index, Token), token_table, symbol_table, code);
 }
 
 void const_declaration(Token t, Vector *token_table, Vector *symbol_table, Vector *identifier_table){
@@ -950,25 +950,30 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 			}
 
 			expression(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, code);
-
+			printf("AFTER EXPRESSION T IS %d\n", vector_get(*token_table, token_table_index, Token)->type);
 			// emit STO sym.addr
 			vector_push(code, &(Inst){STO, 0, symbol->address}, sizeof(Inst));
 
 			break;
 		}
+		
 		case TK_BEGIN: {
-			while (true) {
-				statement(*vector_get(*token_table, ++token_table_index, Token), token_table, symbol_table, code);
+			do {
+				debug("---- Start ----\n");
+				t = get_next_token(token_table);
+				statement(t, token_table, symbol_table, code);
+				t = *vector_get(*token_table, token_table_index, Token);
+				debug("---- End ----\n");
 
-				Token nextToken = *vector_get(*token_table, ++token_table_index, Token);
+			}while(t.type == TK_SEMICOLON);
 
-				if (nextToken.type == TK_END) {
-					break;
-				}
-				else if (nextToken.type != TK_SEMICOLON) {
-					err_with_pos("Expected \";\" or \"end\"", "", t.pos);
-				}
+			if (t.type == TK_END) {
+				break;
 			}
+			else if (t.type != TK_SEMICOLON) {
+				err_with_pos("Expected \";\" or \"end\"", "", t.pos);
+			}
+		
 			break;
 		}
 		case TK_IF: {
@@ -989,6 +994,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 
 			break;
 		}
+
 		case TK_XOR: {
 			condition(get_next_token(token_table), token_table, symbol_table, code);
 
@@ -1014,6 +1020,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 
 			break;
 		}
+
 		case TK_WHILE: {
 			const unsigned int loop_head_idx = code->len;
 
@@ -1037,6 +1044,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 
 			break;
 		}
+
 		case TK_READ: {
 			const Token ident_token = get_next_token(token_table);
 			if (ident_token.type != TK_IDENT) {
@@ -1056,6 +1064,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 
 			break;
 		}
+
 		case TK_WRITE: {
 			expression(get_next_token(token_table), token_table, symbol_table, code);
 			// emit WRITE
@@ -1063,6 +1072,7 @@ void statement(Token t, Vector *token_table, Vector *symbol_table, Vector *code)
 
 			break;
 		}
+
 		default:
 			err_with_pos("Unhandled token", "", t.pos);
 	}
@@ -1216,10 +1226,8 @@ void term(Token t, Vector *token_table, Vector *symbol_table, Vector *code){
 	*/
 	printf("TERM\n");
 
-	printf("PRE FACTOR SYMBOL %d\n", t.type);	
 	factor(t, token_table, symbol_table, code);
 	t = *vector_get(*token_table, token_table_index, Token);
-	printf("POST FACTOR SYMBOL %d\n", t.type);
 
 	while(t.type == TK_MULT || t.type == TK_SLASH){
 		if(t.type == TK_MULT){
@@ -1264,6 +1272,7 @@ void factor(Token t, Vector *token_table, Vector *symbol_table, Vector *code){
 	*/
 
 	printf("FACTOR\n");
+
 	const Symbol *const symbols = (Symbol*)symbol_table->arr;
 	Token next_token;
 

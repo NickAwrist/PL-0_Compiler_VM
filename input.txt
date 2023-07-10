@@ -1,7 +1,11 @@
-var a;
+const c1 := 2, c2 := 1010;
+var a, b;
 begin
-	if 1 <> 1 then
-		write 1;
-	else
-		write 2;
+	a := 1;
+	b := 2;
+
+	if a = 1 then
+		write a;
+	xor
+		write b;
 end.
