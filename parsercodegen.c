@@ -1,4 +1,4 @@
-// Written by Nicholas Aristizabal and Conner McKay
+// Written by Nicholas Aristizabal and Natalya McKay
 
 #include <stdio.h>
 #include <stdlib.h>
